@@ -8,6 +8,16 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// @Summary      Логин пользователя
+// @Description  Получить JWT токен по username и password
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        input  body  dto.LoginRequest  true  "Данные для входа"
+// @Success      200  {object}  dto.LoginResponse
+// @Failure      400  {object}  map[string]string
+// @Failure      401  {object}  map[string]string
+// @Router       /api/v1/login [post]
 func (h *Handler) Login(c echo.Context) error {
 	var req dto.LoginRequest
 	if err := c.Bind(&req); err != nil {
@@ -22,6 +32,15 @@ func (h *Handler) Login(c echo.Context) error {
 	return c.JSON(http.StatusOK, resp)
 }
 
+// @Summary      Регистрация пользователя
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param        input  body  dto.UserRequest  true  "Данные пользователя"
+// @Success      201  {object}  map[string]string
+// @Failure      400  {object}  map[string]string
+// @Failure      409  {object}  map[string]string
+// @Router       /api/v1/register [post]
 func (h *Handler) CreateUser(c echo.Context) error {
 	var req dto.UserRequest
 	if err := c.Bind(&req); err != nil {
@@ -35,6 +54,13 @@ func (h *Handler) CreateUser(c echo.Context) error {
 	return c.JSON(http.StatusCreated, map[string]string{"message": "user created"})
 }
 
+// @Summary      Получить всех пользователей
+// @Tags         users
+// @Security     BearerAuth
+// @Produce      json
+// @Success      200  {array}   dto.UserResponse
+// @Failure      403  {object}  map[string]string
+// @Router       /api/v1/users [get]
 func (h *Handler) GetUsers(c echo.Context) error {
 	users, err := h.service.User().GetUsers(c.Request().Context())
 	if err != nil {
@@ -43,6 +69,15 @@ func (h *Handler) GetUsers(c echo.Context) error {
 	return c.JSON(http.StatusOK, users)
 }
 
+// @Summary      Получить пользователя по id
+// @Tags         users
+// @Security     BearerAuth
+// @Produce      json
+// @Param        id   path      int  true  "User ID"
+// @Success      200  {object}  dto.UserResponse
+// @Failure      400  {object}  map[string]string
+// @Failure      404  {object}  map[string]string
+// @Router       /api/v1/users/{id} [get]
 func (h *Handler) GetUserByID(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -57,6 +92,17 @@ func (h *Handler) GetUserByID(c echo.Context) error {
 	return c.JSON(http.StatusOK, resp)
 }
 
+// @Summary      Обновить пользователя
+// @Tags         users
+// @Security     BearerAuth
+// @Accept       json
+// @Produce      json
+// @Param        id     path      int             true  "User ID"
+// @Param        input  body      dto.UserRequest true  "Данные пользователя"
+// @Success      200    {object}  map[string]string
+// @Failure      400    {object}  map[string]string
+// @Failure      404    {object}  map[string]string
+// @Router       /api/v1/users/{id} [put]
 func (h *Handler) UpdateUser(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -75,6 +121,15 @@ func (h *Handler) UpdateUser(c echo.Context) error {
 	return c.JSON(http.StatusOK, map[string]string{"message": "user updated"})
 }
 
+// @Summary      Удалить пользователя
+// @Tags         users
+// @Security     BearerAuth
+// @Produce      json
+// @Param        id   path      int  true  "User ID"
+// @Success      200  {object}  map[string]string
+// @Failure      400  {object}  map[string]string
+// @Failure      404  {object}  map[string]string
+// @Router       /api/v1/users/{id} [delete]
 func (h *Handler) DeleteUser(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {

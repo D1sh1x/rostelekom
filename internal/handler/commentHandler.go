@@ -8,6 +8,15 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// @Summary      Создать комментарий
+// @Tags         comments
+// @Security     BearerAuth
+// @Accept       json
+// @Produce      json
+// @Param        input  body  dto.CommentRequest  true  "Данные комментария"
+// @Success      201  {object}  dto.CommentResponse
+// @Failure      400  {object}  map[string]string
+// @Router       /api/v1/comments [post]
 func (h *Handler) CreateComment(c echo.Context) error {
 	var req dto.CommentRequest
 	if err := c.Bind(&req); err != nil {
@@ -24,6 +33,15 @@ func (h *Handler) CreateComment(c echo.Context) error {
 	return c.JSON(http.StatusCreated, resp)
 }
 
+// @Summary      Получить комментарий по id
+// @Tags         comments
+// @Security     BearerAuth
+// @Produce      json
+// @Param        id   path      int  true  "Comment ID"
+// @Success      200  {object}  dto.CommentResponse
+// @Failure      400  {object}  map[string]string
+// @Failure      404  {object}  map[string]string
+// @Router       /api/v1/comments/{id} [get]
 func (h *Handler) GetCommentByID(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -38,6 +56,14 @@ func (h *Handler) GetCommentByID(c echo.Context) error {
 	return c.JSON(http.StatusOK, resp)
 }
 
+// @Summary      Получить комментарии по task_id
+// @Tags         comments
+// @Security     BearerAuth
+// @Produce      json
+// @Param        task_id  query     int  true  "ID задачи"
+// @Success      200  {array}  dto.CommentResponse
+// @Failure      400  {object}  map[string]string
+// @Router       /api/v1/comments [get]
 func (h *Handler) GetCommentsByTaskID(c echo.Context) error {
 	taskID, err := strconv.Atoi(c.QueryParam("task_id"))
 	if err != nil {
@@ -52,6 +78,17 @@ func (h *Handler) GetCommentsByTaskID(c echo.Context) error {
 	return c.JSON(http.StatusOK, comments)
 }
 
+// @Summary      Обновить комментарий
+// @Tags         comments
+// @Security     BearerAuth
+// @Accept       json
+// @Produce      json
+// @Param        id     path      int                 true  "Comment ID"
+// @Param        input  body      dto.CommentRequest  true  "Данные комментария"
+// @Success      200    {object}  map[string]string
+// @Failure      400    {object}  map[string]string
+// @Failure      404    {object}  map[string]string
+// @Router       /api/v1/comments/{id} [put]
 func (h *Handler) UpdateComment(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -75,6 +112,15 @@ func (h *Handler) UpdateComment(c echo.Context) error {
 	return c.JSON(http.StatusOK, map[string]string{"message": "comment updated"})
 }
 
+// @Summary      Удалить комментарий
+// @Tags         comments
+// @Security     BearerAuth
+// @Produce      json
+// @Param        id   path      int  true  "Comment ID"
+// @Success      200  {object}  map[string]string
+// @Failure      400  {object}  map[string]string
+// @Failure      404  {object}  map[string]string
+// @Router       /api/v1/comments/{id} [delete]
 func (h *Handler) DeleteComment(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {

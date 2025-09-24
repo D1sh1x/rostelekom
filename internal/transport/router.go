@@ -1,12 +1,14 @@
 package transport
 
 import (
+	"SkillsTracker/docs"
 	"SkillsTracker/internal/config"
 	"SkillsTracker/internal/handler"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	echoSwagger "github.com/swaggo/echo-swagger"
 
 	customMiddleware "SkillsTracker/internal/middleware"
 )
@@ -55,6 +57,9 @@ func NewServer(jwtSecret []byte, h *handler.Handler, config *config.Config) *htt
 			}
 		}
 	}
+
+	docs.SwaggerInfo.BasePath = "/api/v1"
+	router.GET("/swagger/*", echoSwagger.WrapHandler)
 
 	return &http.Server{
 		Addr:         config.HTTPServer.Port,

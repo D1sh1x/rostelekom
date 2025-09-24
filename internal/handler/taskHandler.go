@@ -8,6 +8,15 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// @Summary      Создать задачу
+// @Tags         tasks
+// @Security     BearerAuth
+// @Accept       json
+// @Produce      json
+// @Param        input  body  dto.TaskRequest  true  "Данные задачи"
+// @Success      201  {object}  dto.TaskResponse
+// @Failure      400  {object}  map[string]string
+// @Router       /api/v1/tasks [post]
 func (h *Handler) CreateTask(c echo.Context) error {
 	var req dto.TaskRequest
 	if err := c.Bind(&req); err != nil {
@@ -24,6 +33,15 @@ func (h *Handler) CreateTask(c echo.Context) error {
 	return c.JSON(http.StatusCreated, resp)
 }
 
+// @Summary      Получить задачу по id
+// @Tags         tasks
+// @Security     BearerAuth
+// @Produce      json
+// @Param        id   path      int  true  "Task ID"
+// @Success      200  {object}  dto.TaskResponse
+// @Failure      400  {object}  map[string]string
+// @Failure      404  {object}  map[string]string
+// @Router       /api/v1/tasks/{id} [get]
 func (h *Handler) GetTaskByID(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -38,6 +56,14 @@ func (h *Handler) GetTaskByID(c echo.Context) error {
 	return c.JSON(http.StatusOK, resp)
 }
 
+// @Summary      Получить задачи по employee_id
+// @Tags         tasks
+// @Security     BearerAuth
+// @Produce      json
+// @Param        employee_id  query     int  true  "ID сотрудника"
+// @Success      200  {array}  dto.TaskResponse
+// @Failure      400  {object}  map[string]string
+// @Router       /api/v1/tasks [get]
 func (h *Handler) GetTasksByEmployeeID(c echo.Context) error {
 	employeeID, err := strconv.Atoi(c.QueryParam("employee_id"))
 	if err != nil {
@@ -52,6 +78,17 @@ func (h *Handler) GetTasksByEmployeeID(c echo.Context) error {
 	return c.JSON(http.StatusOK, tasks)
 }
 
+// @Summary      Обновить задачу
+// @Tags         tasks
+// @Security     BearerAuth
+// @Accept       json
+// @Produce      json
+// @Param        id     path      int             true  "Task ID"
+// @Param        input  body      dto.TaskRequest true  "Данные задачи"
+// @Success      200    {object}  map[string]string
+// @Failure      400    {object}  map[string]string
+// @Failure      404    {object}  map[string]string
+// @Router       /api/v1/tasks/{id} [put]
 func (h *Handler) UpdateTask(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -72,6 +109,15 @@ func (h *Handler) UpdateTask(c echo.Context) error {
 	return c.JSON(http.StatusOK, map[string]string{"message": "task updated"})
 }
 
+// @Summary      Удалить задачу
+// @Tags         tasks
+// @Security     BearerAuth
+// @Produce      json
+// @Param        id   path      int  true  "Task ID"
+// @Success      200  {object}  map[string]string
+// @Failure      400  {object}  map[string]string
+// @Failure      404  {object}  map[string]string
+// @Router       /api/v1/tasks/{id} [delete]
 func (h *Handler) DeleteTask(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
