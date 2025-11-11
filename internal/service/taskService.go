@@ -143,6 +143,14 @@ func (s *taskService) UpdateTask(ctx context.Context, taskID int, req *dto.TaskR
 		task.Deadline = deadline
 	}
 
+	if req.Progress != task.Progress {
+		task.Progress = req.Progress
+	}
+
+	if req.Status != "" {
+		task.Status = models.TaskStatus(req.Status)
+	}
+
 	if err := s.repo.Task().UpdateTask(ctx, task); err != nil {
 		logger.Error().Err(err).Msg("failed to update task")
 		return err

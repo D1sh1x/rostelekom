@@ -20,7 +20,7 @@ func NewServer(jwtSecret []byte, h *handler.Handler, config *config.Config) *htt
 	router.Use(middleware.Recover())
 	router.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"http://localhost:3000"},
-		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
+		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization},
 		AllowMethods: []string{"GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"},
 	}))
 
