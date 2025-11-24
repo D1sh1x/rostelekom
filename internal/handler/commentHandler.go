@@ -9,11 +9,12 @@ import (
 )
 
 // @Summary      Создать комментарий
+// @Description  Создает новый комментарий к задаче. Автором комментария становится текущий авторизованный пользователь.
 // @Tags         comments
 // @Security     BearerAuth
 // @Accept       json
 // @Produce      json
-// @Param        input  body  dto.CommentRequest  true  "Данные комментария"
+// @Param        input  body  dto.CommentRequest  true  "Данные комментария (task_id, text)"
 // @Success      201  {object}  dto.CommentResponse
 // @Failure      400  {object}  map[string]string
 // @Router       /api/v1/comments [post]
@@ -57,6 +58,7 @@ func (h *Handler) GetCommentByID(c echo.Context) error {
 }
 
 // @Summary      Получить комментарии по task_id
+// @Description  Возвращает все комментарии к указанной задаче, отсортированные по дате создания.
 // @Tags         comments
 // @Security     BearerAuth
 // @Produce      json

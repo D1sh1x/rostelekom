@@ -33,10 +33,11 @@ func (h *Handler) Login(c echo.Context) error {
 }
 
 // @Summary      Регистрация пользователя
+// @Description  Регистрирует нового пользователя в системе. Роль может быть "manager" или "employee".
 // @Tags         users
 // @Accept       json
 // @Produce      json
-// @Param        input  body  dto.UserRequest  true  "Данные пользователя"
+// @Param        input  body  dto.UserRequest  true  "Данные пользователя (username, password, name, email, role)"
 // @Success      201  {object}  map[string]string
 // @Failure      400  {object}  map[string]string
 // @Failure      409  {object}  map[string]string
@@ -55,6 +56,7 @@ func (h *Handler) CreateUser(c echo.Context) error {
 }
 
 // @Summary      Получить всех пользователей
+// @Description  Возвращает список всех пользователей. Доступно только менеджерам.
 // @Tags         users
 // @Security     BearerAuth
 // @Produce      json

@@ -75,6 +75,7 @@ func (s *userService) CreateUser(ctx context.Context, req *dto.UserRequest) erro
 		PasswordHash: string(passwordHash),
 		Role:         models.Role(req.Role),
 		Name:         req.Name,
+		Email:        req.Email,
 	}
 
 	if err := s.repo.User().CreateUser(ctx, user); err != nil {
@@ -102,6 +103,7 @@ func (s *userService) GetUsers(ctx context.Context) ([]*dto.UserResponse, error)
 			ID:        user.ID,
 			Username:  user.Username,
 			Name:      user.Name,
+			Email:     user.Email,
 			Role:      string(user.Role),
 			CreatedAt: user.CreatedAt,
 			UpdatedAt: user.UpdatedAt,
@@ -124,6 +126,7 @@ func (s *userService) GetUserByID(ctx context.Context, userID int) (*dto.UserRes
 		ID:        user.ID,
 		Username:  user.Username,
 		Name:      user.Name,
+		Email:     user.Email,
 		Role:      string(user.Role),
 		CreatedAt: user.CreatedAt,
 		UpdatedAt: user.UpdatedAt,
@@ -145,6 +148,9 @@ func (s *userService) UpdateUser(ctx context.Context, userID int, req *dto.UserR
 	}
 	if req.Name != "" {
 		user.Name = req.Name
+	}
+	if req.Email != "" {
+		user.Email = req.Email
 	}
 
 	if err := s.repo.User().UpdateUser(ctx, user); err != nil {

@@ -9,13 +9,15 @@ import (
 )
 
 // @Summary      Создать задачу
+// @Description  Создает новую задачу в проекте. Менеджер проекта может создавать задачи. При создании можно указать необходимые навыки и назначить сотрудников (с проверкой наличия навыков). Можно указать родительскую задачу для создания зависимостей.
 // @Tags         tasks
 // @Security     BearerAuth
 // @Accept       json
 // @Produce      json
-// @Param        input  body  dto.TaskRequest  true  "Данные задачи"
+// @Param        input  body  dto.TaskRequest  true  "Данные задачи (project_id, title, description, deadline, hours, priority, type, parent_task_id, skill_ids, assignee_ids)"
 // @Success      201  {object}  dto.TaskResponse
 // @Failure      400  {object}  map[string]string
+// @Failure      403  {object}  map[string]string
 // @Router       /api/v1/tasks [post]
 func (h *Handler) CreateTask(c echo.Context) error {
 	var req dto.TaskRequest
@@ -56,26 +58,49 @@ func (h *Handler) GetTaskByID(c echo.Context) error {
 	return c.JSON(http.StatusOK, resp)
 }
 
-// @Summary      Получить задачи по employee_id
+// @Summary      Получить задачи
+// @Description  Получить список задач по project_id или user_id. Необходимо указать один из параметров.
 // @Tags         tasks
 // @Security     BearerAuth
 // @Produce      json
-// @Param        employee_id  query     int  true  "ID сотрудника"
+// @Param        project_id  query     int  false  "ID проекта (для получения всех задач проекта)"
+// @Param        user_id     query     int  false  "ID пользователя (для получения всех задач пользователя)"
 // @Success      200  {array}  dto.TaskResponse
 // @Failure      400  {object}  map[string]string
 // @Router       /api/v1/tasks [get]
-func (h *Handler) GetTasksByEmployeeID(c echo.Context) error {
-	employeeID, err := strconv.Atoi(c.QueryParam("employee_id"))
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid employee_id"})
+func (h *Handler) GetTasks(c echo.Context) error {
+	projectIDStr := c.QueryParam("project_id")
+	userIDStr := c.QueryParam("user_id")
+
+	if projectIDStr != "" {
+		projectID, err := strconv.Atoi(projectIDStr)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid project_id"})
+		}
+
+		tasks, err := h.service.Task().GetTasksByProjectID(c.Request().Context(), projectID)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+		}
+
+		return c.JSON(http.StatusOK, tasks)
 	}
 
-	tasks, err := h.service.Task().GetTasksByEmployeeID(c.Request().Context(), employeeID)
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+	if userIDStr != "" {
+		userID, err := strconv.Atoi(userIDStr)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid user_id"})
+		}
+
+		tasks, err := h.service.Task().GetTasksByUserID(c.Request().Context(), userID)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+		}
+
+		return c.JSON(http.StatusOK, tasks)
 	}
 
-	return c.JSON(http.StatusOK, tasks)
+	return c.JSON(http.StatusBadRequest, map[string]string{"error": "project_id or user_id required"})
 }
 
 // @Summary      Обновить задачу

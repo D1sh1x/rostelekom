@@ -1,7 +1,6 @@
 package transport
 
 import (
-	"SkillsTracker/docs"
 	"SkillsTracker/internal/config"
 	"SkillsTracker/internal/handler"
 	"net/http"
@@ -24,6 +23,9 @@ func NewServer(jwtSecret []byte, h *handler.Handler, config *config.Config) *htt
 		AllowMethods: []string{"GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"},
 	}))
 
+	swaggerHandler := echoSwagger.WrapHandler
+	router.GET("/swagger/*", swaggerHandler)
+
 	api := router.Group("/api")
 	{
 		v1 := api.Group("/v1")
@@ -38,7 +40,7 @@ func NewServer(jwtSecret []byte, h *handler.Handler, config *config.Config) *htt
 				tasks := protected.Group("/tasks")
 				tasks.POST("", h.CreateTask)
 				tasks.GET("/:id", h.GetTaskByID)
-				tasks.GET("", h.GetTasksByEmployeeID)
+				tasks.GET("", h.GetTasks)
 				tasks.PUT("/:id", h.UpdateTask)
 				tasks.DELETE("/:id", h.DeleteTask)
 
@@ -49,17 +51,34 @@ func NewServer(jwtSecret []byte, h *handler.Handler, config *config.Config) *htt
 				comments.PUT("/:id", h.UpdateComment)
 				comments.DELETE("/:id", h.DeleteComment)
 
+				projects := protected.Group("/projects")
+				projects.POST("", h.CreateProject)
+				projects.GET("/:id", h.GetProjectByID)
+				projects.GET("", h.GetProjects)
+				projects.PUT("/:id", h.UpdateProject)
+				projects.DELETE("/:id", h.DeleteProject)
+				projects.POST("/:id/members", h.AddProjectMember)
+				projects.DELETE("/:id/members", h.RemoveProjectMember)
+
+				skills := protected.Group("/skills")
+				skills.POST("", h.CreateSkill)
+				skills.GET("/:id", h.GetSkillByID)
+				skills.GET("", h.GetSkills)
+				skills.PUT("/:id", h.UpdateSkill)
+				skills.DELETE("/:id", h.DeleteSkill)
+
 				users := protected.Group("/users")
 				users.GET("", h.GetUsers, customMiddleware.RequireRole("manager"))
 				users.GET("/:id", h.GetUserByID, customMiddleware.RequireRole("manager"))
 				users.PUT("/:id", h.UpdateUser, customMiddleware.RequireRole("manager"))
 				users.DELETE("/:id", h.DeleteUser, customMiddleware.RequireRole("manager"))
+				users.POST("/:user_id/skills", h.AddUserSkill)
+				users.GET("/:user_id/skills", h.GetUserSkills)
+				users.PUT("/:user_id/skills/:skill_id", h.UpdateUserSkill)
+				users.DELETE("/:user_id/skills/:skill_id", h.RemoveUserSkill)
 			}
 		}
 	}
-
-	docs.SwaggerInfo.BasePath = "/api/v1"
-	router.GET("/swagger/*", echoSwagger.WrapHandler)
 
 	return &http.Server{
 		Addr:         config.HTTPServer.Port,
