@@ -1,0 +1,11 @@
+http:
+  port: ":8080"
+  read_timeout: 10s
+  write_timeout: 10s
+  idle_timeout: 60s
+
+database:
+  dsn: "postgres://postgres:12345678@db:5432/skillstracker?sslmode=disable"
+
+auth:
+  jwt_secret: "verysecret"

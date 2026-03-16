@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 12345678
+      POSTGRES_DB: skillstracker
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d
+
+  app:
+    build: .
+    depends_on:
+      - db
+    environment:
+      CONFIG_PATH: /app/config/config.yaml
+    ports:
+      - "8080:8080"
+    restart: always
+    volumes:
+      - ./config:/app/config
+
+volumes:
+  pgdata:
