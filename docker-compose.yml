@@ -1,0 +1,41 @@
+services:
+  db:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 12345678
+      POSTGRES_DB: skillstracker
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./BackendSkillTracker/migrations:/docker-entrypoint-initdb.d
+
+  backend:
+    build:
+      context: ./BackendSkillTracker
+      dockerfile: Dockerfile
+    depends_on:
+      - db
+    environment:
+      CONFIG_PATH: /app/config/config.yaml
+    ports:
+      - "8080:8080"
+    restart: always
+    volumes:
+      - ./BackendSkillTracker/config:/app/config
+      - ./BackendSkillTracker/uploads:/app/uploads
+
+  frontend:
+    build:
+      context: ./FrontendSkillTracker
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    restart: always
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:

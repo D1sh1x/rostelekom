@@ -1,11 +1,16 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import type { User, AuthResponse } from '../types';
-import api from '../services/api';
+
+interface User {
+  id: number;
+  username: string;
+  role: string;
+  name: string;
+}
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (data: AuthResponse) => void;
+  login: (accessToken: string, refreshToken: string, userData: User) => void;
   logout: () => void;
 }
 
@@ -17,31 +22,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
-    if (savedUser) {
+    const token = localStorage.getItem('access_token');
+    if (savedUser && token) {
       setUser(JSON.parse(savedUser));
     }
     setLoading(false);
   }, []);
 
-  const login = (data: AuthResponse) => {
-    localStorage.setItem('access_token', data.access_token);
-    localStorage.setItem('refresh_token', data.refresh_token);
-    localStorage.setItem('user', JSON.stringify(data.user));
-    setUser(data.user);
+  const login = (accessToken: string, refreshToken: string, userData: User) => {
+    localStorage.setItem('access_token', accessToken);
+    localStorage.setItem('refresh_token', refreshToken);
+    localStorage.setItem('user', JSON.stringify(userData));
+    setUser(userData);
   };
 
-  const logout = async () => {
-    try {
-      const refreshToken = localStorage.getItem('refresh_token');
-      await api.post('/logout', { refresh_token: refreshToken });
-    } catch (err) {
-      console.error('Logout error:', err);
-    } finally {
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
-      localStorage.removeItem('user');
-      setUser(null);
-    }
+  const logout = () => {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('user');
+    setUser(null);
   };
 
   return (

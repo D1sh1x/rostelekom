@@ -1,13 +1,13 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: '/api/v1',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1',
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Add a request interceptor to inject the token
+// Interceptor to add auth token
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('access_token');
   if (token) {
@@ -16,7 +16,7 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Add a response interceptor to handle token refresh
+// Interceptor to handle token refresh
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -25,19 +25,21 @@ api.interceptors.response.use(
       originalRequest._retry = true;
       try {
         const refreshToken = localStorage.getItem('refresh_token');
-        const response = await axios.post('/api/v1/refresh', {
+        const response = await axios.post(`${api.defaults.baseURL}/refresh`, {
           refresh_token: refreshToken,
         });
-        const { access_token } = response.data;
+        const { access_token, refresh_token: newRefreshToken } = response.data;
+        
         localStorage.setItem('access_token', access_token);
+        localStorage.setItem('refresh_token', newRefreshToken);
+        
         originalRequest.headers.Authorization = `Bearer ${access_token}`;
         return api(originalRequest);
-      } catch (refreshErr) {
+      } catch (refreshError) {
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
-        localStorage.removeItem('user');
         window.location.href = '/login';
-        return Promise.reject(refreshErr);
+        return Promise.reject(refreshError);
       }
     }
     return Promise.reject(error);

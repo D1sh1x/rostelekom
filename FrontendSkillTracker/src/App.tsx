@@ -1,33 +1,46 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
-import Layout from './components/Layout';
-import Dashboard from './pages/Dashboard';
+import React from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import LoginPage from './pages/LoginPage';
+import DashboardPage from './pages/DashboardPage';
+import Layout from './components/Layout';
 
-import TaskListPage from './pages/TaskListPage';
-import TaskDetailPage from './pages/TaskDetailPage';
-import CreateTaskPage from './pages/CreateTaskPage';
-import UsersPage from './pages/UsersPage';
+const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user, loading } = useAuth();
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background text-blue-500 font-mono tracking-widest">
+        INITIALIZING NEURAL UPLINK...
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/login" />;
+  }
+
+  return <Layout>{children}</Layout>;
+};
 
 function App() {
   return (
-    <Router>
-      <AuthProvider>
+    <AuthProvider>
+      <BrowserRouter>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
-          
-          <Route path="/" element={<Layout />}>
-            <Route index element={<Dashboard />} />
-            <Route path="tasks" element={<TaskListPage />} />
-            <Route path="tasks/new" element={<CreateTaskPage />} />
-            <Route path="tasks/:id" element={<TaskDetailPage />} />
-            <Route path="users" element={<UsersPage />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Route>
+          <Route 
+            path="/" 
+            element={
+              <ProtectedRoute>
+                <DashboardPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-      </AuthProvider>
-    </Router>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 
