@@ -49,3 +49,16 @@ func ValidateToken(tokenStr string, secret []byte) (*Claims, error) {
 	}
 	return nil, jwt.ErrSignatureInvalid
 }
+
+func ValidateRefreshToken(tokenStr string, secret []byte) (*jwt.RegisteredClaims, error) {
+	token, err := jwt.ParseWithClaims(tokenStr, &jwt.RegisteredClaims{}, func(t *jwt.Token) (interface{}, error) {
+		return secret, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	if claims, ok := token.Claims.(*jwt.RegisteredClaims); ok && token.Valid {
+		return claims, nil
+	}
+	return nil, jwt.ErrSignatureInvalid
+}

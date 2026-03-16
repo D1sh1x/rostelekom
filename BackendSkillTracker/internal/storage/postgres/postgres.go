@@ -33,7 +33,7 @@ func New(dsn string) (*Storage, error) {
 	sqlDB.SetMaxIdleConns(20)
 	sqlDB.SetConnMaxLifetime(5 * time.Minute)
 
-	if err := db.AutoMigrate(&models.User{}, &models.Task{}, &models.Comment{}, &models.FileAttachment{}); err != nil {
+	if err := db.AutoMigrate(&models.User{}, &models.Task{}, &models.Comment{}, &models.FileAttachment{}, &models.TaskStatusHistory{}); err != nil {
 		return nil, err
 	}
 
@@ -62,6 +62,14 @@ func (s *Storage) GetUserByID(ctx context.Context, id int) (*models.User, error)
 func (s *Storage) GetUserByUsername(ctx context.Context, username string) (*models.User, error) {
 	var u models.User
 	if err := s.db.WithContext(ctx).Where("username = ?", username).First(&u).Error; err != nil {
+		return nil, err
+	}
+	return &u, nil
+}
+
+func (s *Storage) GetUserByRefreshToken(ctx context.Context, token string) (*models.User, error) {
+	var u models.User
+	if err := s.db.WithContext(ctx).Where("refresh_token = ?", token).First(&u).Error; err != nil {
 		return nil, err
 	}
 	return &u, nil

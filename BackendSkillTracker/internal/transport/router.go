@@ -49,6 +49,7 @@ func NewServer(jwtSecret []byte, h *handler.Handler, cfg *config.Config) *http.S
 
 	// Public
 	v1.POST("/login", h.Login)
+	v1.POST("/users", h.CreateUser) // Registration is now public
 	v1.POST("/refresh", h.RefreshToken)
 	v1.GET("/health", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
@@ -62,7 +63,6 @@ func NewServer(jwtSecret []byte, h *handler.Handler, cfg *config.Config) *http.S
 
 	// Users (only manager)
 	managerOnly := m.RoleRequired("manager")
-	auth.POST("/users", h.CreateUser)
 	auth.GET("/users", h.GetUsers, managerOnly)
 	auth.GET("/users/:id", h.GetUserByID, managerOnly)
 	auth.PUT("/users/:id", h.UpdateUser, managerOnly)
@@ -84,6 +84,7 @@ func NewServer(jwtSecret []byte, h *handler.Handler, cfg *config.Config) *http.S
 	auth.PUT("/comments/:id", h.UpdateComment)
 	auth.DELETE("/comments/:id", h.DeleteComment)
 
+	e.Static("/uploads", "./uploads")
 	e.GET("/swagger/*", echoSwagger.WrapHandler)
 
 	return &http.Server{

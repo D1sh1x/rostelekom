@@ -87,48 +87,53 @@ func (s *services) Login(ctx context.Context, req *dto.LoginRequest) (*dto.Login
 	return &dto.LoginResponse{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
+		User: dto.UserResponse{
+			ID:       u.ID,
+			Username: u.Username,
+			Role:     string(u.Role),
+			Name:     u.Name,
+		},
 	}, nil
 }
 
 func (s *services) RefreshToken(ctx context.Context, req *dto.RefreshRequest) (*dto.LoginResponse, error) {
-	// Simple validation: find user by refresh token
-	// In production, we should probably validate the token signature too, but since we store it as is,
-	// if it matches it's valid enough for this basic impl.
-	// However, let's at least check if it's expired via jwtutil.ValidateToken (even if it doesn't have custom claims)
-	_, err := jwtutil.ValidateToken(req.RefreshToken, s.jwtSecret)
+	// 1. Validate the refresh token signature and expiration
+	_, err := jwtutil.ValidateRefreshToken(req.RefreshToken, s.jwtSecret)
 	if err != nil {
 		return nil, errors.New("invalid refresh token")
 	}
 
-	// Find user with this token
-	users, err := s.repo.User().GetUsers(ctx) // This is inefficient but let's see if we have GetUserByRefreshToken
+	// 2. Efficiently find user by refresh token
+	u, err := s.repo.User().GetUserByRefreshToken(ctx, req.RefreshToken)
+	if err != nil {
+		return nil, errors.New("invalid refresh token")
+	}
+
+	// 3. Rotation: generate new pair
+	newAccessToken, err := jwtutil.GenerateAccessToken(u.ID, u.Username, string(u.Role), s.jwtSecret)
 	if err != nil {
 		return nil, err
 	}
-	var targetUser *models.User
-	for _, u := range users {
-		if u.RefreshToken == req.RefreshToken {
-			targetUser = u
-			break
-		}
+	newRefreshToken, err := jwtutil.GenerateRefreshToken(s.jwtSecret)
+	if err != nil {
+		return nil, err
 	}
 
-	if targetUser == nil {
-		return nil, errors.New("invalid refresh token")
-	}
-
-	// Rotation
-	newAccessToken, _ := jwtutil.GenerateAccessToken(targetUser.ID, targetUser.Username, string(targetUser.Role), s.jwtSecret)
-	newRefreshToken, _ := jwtutil.GenerateRefreshToken(s.jwtSecret)
-
-	targetUser.RefreshToken = newRefreshToken
-	if err := s.repo.User().UpdateUser(ctx, targetUser); err != nil {
+	// 4. Update refresh token in DB
+	u.RefreshToken = newRefreshToken
+	if err := s.repo.User().UpdateUser(ctx, u); err != nil {
 		return nil, err
 	}
 
 	return &dto.LoginResponse{
 		AccessToken:  newAccessToken,
 		RefreshToken: newRefreshToken,
+		User: dto.UserResponse{
+			ID:       u.ID,
+			Username: u.Username,
+			Role:     string(u.Role),
+			Name:     u.Name,
+		},
 	}, nil
 }
 

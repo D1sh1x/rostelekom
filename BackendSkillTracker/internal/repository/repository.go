@@ -10,6 +10,7 @@ type UserRepository interface {
     CreateUser(ctx context.Context, user *models.User) error
     GetUserByID(ctx context.Context, id int) (*models.User, error)
     GetUserByUsername(ctx context.Context, username string) (*models.User, error)
+    GetUserByRefreshToken(ctx context.Context, token string) (*models.User, error)
     UpdateUser(ctx context.Context, user *models.User) error
     DeleteUser(ctx context.Context, id int) error
     GetUsers(ctx context.Context) ([]*models.User, error)
