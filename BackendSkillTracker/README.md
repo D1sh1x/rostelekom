@@ -1,35 +1,66 @@
-# SkillTracker Backend (Go + Echo + PostgreSQL)
+# SkillTracker Backend API 
 
-Готовый бэкенд под твой фронт и требования JWT + creator_id.
+Бэкенд-сервис для приложения SkillTracker. Сервис реализован на языке **Go** с использованием веб-фреймворка **Echo** и реляционной базы данных **PostgreSQL**.
 
-## Запуск
-```bash
-docker-compose up --build
-```
+## 🛠 Технологический стек
+- **Язык**: Go (Golang)
+- **Фреймворк**: Echo
+- **ORM/Работа с БД**: GORM / pgx
+- **База данных**: PostgreSQL 15
+- **Аутентификация**: JWT (JSON Web Tokens)
+- **Контейнеризация**: Docker
 
-- БД: `localhost:5432`, db=skillstracker, user=postgres, pass=12345678
-- Backend API: `http://localhost:8080/api/v1`
+## 🚀 Локальный запуск (без Docker)
 
-Создаётся пользователь:
-- username: `admin`
-- password: `admin123`
-- role: `manager`
+Для локального запуска убедитесь, что у вас установлен Go (версии 1.20+) и запущен экземпляр PostgreSQL.
 
-## Эндпоинты
-- `POST /api/v1/login` -> `{ token }`
-- Tasks:
-  - `GET /api/v1/tasks/my`
-  - `GET /api/v1/tasks/:id`
-  - `POST /api/v1/tasks` (только manager)
-  - `PUT /api/v1/tasks/:id`
-  - `DELETE /api/v1/tasks/:id`
-- Users (только manager):
-  - CRUD
-- Comments:
-  - `POST /api/v1/comments`
-  - `GET /api/v1/tasks/:task_id/comments`
-  - `PUT /api/v1/comments/:id`
-  - `DELETE /api/v1/comments/:id`
+1. Перейдите в каталог бэкенда:
+   ```bash
+   cd BackendSkillTracker
+   ```
+2. Установите зависимости:
+   ```bash
+   go mod download
+   ```
+3. Сконфигурируйте подключение к БД (в `config/config.yaml` или через переменные окружения).
+4. Выполните запуск приложения:
+   ```bash
+   go run cmd/main.go
+   ```
 
-## Конфиг
-`config/config.yaml` — DSN, порт, секрет JWT.
+*Примечание: При запуске через `docker-compose` из корня проекта миграции накатываются автоматически (из папки `migrations`).*
+
+## 📚 API Эндпоинты
+
+Базовый URL: `http://localhost:8080/api/v1`
+
+### Аутентификация
+- `POST /login` — Авторизация пользователя. Возвращает JWT токен: `{ "token": "..." }`.
+
+### Задачи (Tasks)
+- `GET /tasks/my` — Получение списка задач текущего (авторизованного) пользователя.
+- `GET /tasks/:id` — Получение данных конкретной задачи по её ID.
+- `POST /tasks` — Создание новой задачи (доступно **только** для менеджеров).
+- `PUT /tasks/:id` — Обновление задачи.
+- `DELETE /tasks/:id` — Удаление задачи.
+
+### Пользователи (Users) 
+*Доступно только пользователям с ролью manager.*
+- Включает стандартные CRUD операции для управления пользователями.
+- По умолчанию системой автоматически создаётся администратор:
+  - Username: `admin`
+  - Password: `admin123`
+  - Role: `manager`
+
+### Комментарии (Comments)
+- `POST /comments` — Создание комментария к задаче (с учетом `creator_id`).
+- `GET /tasks/:task_id/comments` — Получение всех комментариев по конкретной задаче.
+- `PUT /comments/:id` — Редактирование комментария.
+- `DELETE /comments/:id` — Удаление комментария.
+
+## ⚙️ Конфигурация
+Настройки проекта находятся в файле `config/config.yaml`.
+В нём задаются:
+- DSN (строка подключения к базе данных PostgreSQL).
+- Порт приложения (по умолчанию `8080`).
+- Секретный ключ для подписи JWT.
