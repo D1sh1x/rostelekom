@@ -37,14 +37,14 @@ export default function TaskFilters({ filters, onChange, employees = [], showEmp
       </div>
 
       <Select
-        value={filters.status ?? ''}
-        onValueChange={v => onChange({ ...filters, status: (v as TaskFilter['status']) || undefined })}
+        value={filters.status ?? 'all'}
+        onValueChange={v => onChange({ ...filters, status: v === 'all' ? undefined : (v as TaskFilter['status']) })}
       >
         <SelectTrigger className="h-9 w-36">
           <SelectValue placeholder="All statuses" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="">All statuses</SelectItem>
+          <SelectItem value="all">All statuses</SelectItem>
           <SelectItem value="pending">Pending</SelectItem>
           <SelectItem value="in_progress">In Progress</SelectItem>
           <SelectItem value="completed">Completed</SelectItem>
@@ -53,14 +53,14 @@ export default function TaskFilters({ filters, onChange, employees = [], showEmp
 
       {showEmployeeFilter && employees.length > 0 && (
         <Select
-          value={filters.employee_id?.toString() ?? ''}
-          onValueChange={v => onChange({ ...filters, employee_id: v ? Number(v) : undefined })}
+          value={filters.employee_id?.toString() ?? 'all'}
+          onValueChange={v => onChange({ ...filters, employee_id: v === 'all' ? undefined : Number(v) })}
         >
           <SelectTrigger className="h-9 w-40">
             <SelectValue placeholder="All employees" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All employees</SelectItem>
+            <SelectItem value="all">All employees</SelectItem>
             {employees.map(e => (
               <SelectItem key={e.id} value={e.id.toString()}>{e.name}</SelectItem>
             ))}

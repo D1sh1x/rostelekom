@@ -32,7 +32,9 @@ export default function TaskForm({ employees, onSubmit, isLoading, defaultValues
   })
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit(async (data) => {
+      await onSubmit({ ...data, deadline: new Date(data.deadline).toISOString() })
+    })} className="space-y-4">
       <div className="space-y-1.5">
         <Label>Title</Label>
         <Input placeholder="Task title" {...register('title')} />
