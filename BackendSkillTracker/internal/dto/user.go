@@ -22,6 +22,13 @@ type UserRequest struct {
 	Name     string `json:"name" validate:"required"`
 }
 
+type UpdateUserRequest struct {
+	Username string `json:"username" validate:"required,min=3"`
+	Password string `json:"password" validate:"omitempty,min=6"`
+	Role     string `json:"role" validate:"required,oneof=manager employee"`
+	Name     string `json:"name" validate:"required"`
+}
+
 type UserResponse struct {
 	ID       int    `json:"id"`
 	Username string `json:"username"`

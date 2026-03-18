@@ -160,8 +160,9 @@ func (h *Handler) UploadAttachment(c echo.Context) error {
 		os.Mkdir(uploadDir, 0755)
 	}
 
-	// Create unique filename
-	dstPath := filepath.Join(uploadDir, strconv.Itoa(int(time.Now().Unix()))+"_"+file.Filename)
+	// Create unique filename (filepath.Base prevents path traversal)
+	safeFilename := filepath.Base(file.Filename)
+	dstPath := filepath.Join(uploadDir, strconv.Itoa(int(time.Now().Unix()))+"_"+safeFilename)
 	dst, err := os.Create(dstPath)
 	if err != nil {
 		return err
@@ -172,7 +173,7 @@ func (h *Handler) UploadAttachment(c echo.Context) error {
 		return err
 	}
 
-	res, err := h.service.Task().UploadAttachment(c.Request().Context(), taskID, userID, file.Filename, dstPath, file.Size)
+	res, err := h.service.Task().UploadAttachment(c.Request().Context(), taskID, userID, safeFilename, dstPath, file.Size)
 	if err != nil {
 		os.Remove(dstPath)
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})

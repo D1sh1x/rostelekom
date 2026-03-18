@@ -29,6 +29,10 @@ func (m *MockRepo) File() repository.FileRepository {
 	return m.Called().Get(0).(repository.FileRepository)
 }
 
+func (m *MockRepo) Skill() repository.SkillRepository {
+	return m.Called().Get(0).(repository.SkillRepository)
+}
+
 type MockUserRepo struct {
 	mock.Mock
 }
@@ -63,6 +67,22 @@ func (m *MockUserRepo) DeleteUser(ctx context.Context, id int) error {
 
 func (m *MockUserRepo) GetUsers(ctx context.Context) ([]*models.User, error) {
 	args := m.Called(ctx)
+	return args.Get(0).([]*models.User), args.Error(1)
+}
+
+func (m *MockUserRepo) GetUserByRefreshToken(ctx context.Context, token string) (*models.User, error) {
+	args := m.Called(ctx, token)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.User), args.Error(1)
+}
+
+func (m *MockUserRepo) GetEmployeesWithSkills(ctx context.Context) ([]*models.User, error) {
+	args := m.Called(ctx)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
 	return args.Get(0).([]*models.User), args.Error(1)
 }
 
@@ -107,6 +127,66 @@ func (m *MockTaskRepo) GetHistoryByTaskID(ctx context.Context, taskID int) ([]mo
 func (m *MockTaskRepo) ListTasks(ctx context.Context, filter dto.TaskFilter) ([]models.Task, error) {
 	args := m.Called(ctx, filter)
 	return args.Get(0).([]models.Task), args.Error(1)
+}
+
+func (m *MockTaskRepo) AddSkillToTask(ctx context.Context, taskID int, skillID int) error {
+	return m.Called(ctx, taskID, skillID).Error(0)
+}
+
+func (m *MockTaskRepo) RemoveSkillFromTask(ctx context.Context, taskID int, skillID int) error {
+	return m.Called(ctx, taskID, skillID).Error(0)
+}
+
+func (m *MockTaskRepo) GetTaskSkills(ctx context.Context, taskID int) ([]models.Skill, error) {
+	args := m.Called(ctx, taskID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]models.Skill), args.Error(1)
+}
+
+type MockSkillRepo struct {
+	mock.Mock
+}
+
+func (m *MockSkillRepo) CreateSkill(ctx context.Context, skill *models.Skill) error {
+	return m.Called(ctx, skill).Error(0)
+}
+
+func (m *MockSkillRepo) GetSkillByID(ctx context.Context, id int) (*models.Skill, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.Skill), args.Error(1)
+}
+
+func (m *MockSkillRepo) GetSkills(ctx context.Context) ([]models.Skill, error) {
+	args := m.Called(ctx)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]models.Skill), args.Error(1)
+}
+
+func (m *MockSkillRepo) DeleteSkill(ctx context.Context, id int) error {
+	return m.Called(ctx, id).Error(0)
+}
+
+func (m *MockSkillRepo) AssignSkillToUser(ctx context.Context, userID int, skillID int) error {
+	return m.Called(ctx, userID, skillID).Error(0)
+}
+
+func (m *MockSkillRepo) RemoveSkillFromUser(ctx context.Context, userID int, skillID int) error {
+	return m.Called(ctx, userID, skillID).Error(0)
+}
+
+func (m *MockSkillRepo) GetUserSkills(ctx context.Context, userID int) ([]models.Skill, error) {
+	args := m.Called(ctx, userID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]models.Skill), args.Error(1)
 }
 
 type MockCommentRepo struct {

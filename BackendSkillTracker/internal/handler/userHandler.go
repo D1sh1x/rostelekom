@@ -147,14 +147,20 @@ func (h *Handler) GetUserByID(c echo.Context) error {
 // @Router /users/{id} [put]
 func (h *Handler) UpdateUser(c echo.Context) error {
 	id, _ := strconv.Atoi(c.Param("id"))
-	var req dto.UserRequest
+	var req dto.UpdateUserRequest
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid input"})
 	}
 	if err := h.validate(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
 	}
-	if err := h.service.User().UpdateUser(c.Request().Context(), id, &req); err != nil {
+	userReq := &dto.UserRequest{
+		Username: req.Username,
+		Password: req.Password,
+		Role:     req.Role,
+		Name:     req.Name,
+	}
+	if err := h.service.User().UpdateUser(c.Request().Context(), id, userReq); err != nil {
 		return c.JSON(http.StatusNotFound, map[string]string{"error": "user not found"})
 	}
 	return c.JSON(http.StatusOK, map[string]string{"message": "updated"})

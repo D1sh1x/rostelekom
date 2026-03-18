@@ -49,7 +49,6 @@ func NewServer(jwtSecret []byte, h *handler.Handler, cfg *config.Config) *http.S
 
 	// Public
 	v1.POST("/login", h.Login)
-	v1.POST("/users", h.CreateUser) // Registration is now public
 	v1.POST("/refresh", h.RefreshToken)
 	v1.GET("/health", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
@@ -63,10 +62,21 @@ func NewServer(jwtSecret []byte, h *handler.Handler, cfg *config.Config) *http.S
 
 	// Users (only manager)
 	managerOnly := m.RoleRequired("manager")
+	auth.POST("/users", h.CreateUser, managerOnly)
 	auth.GET("/users", h.GetUsers, managerOnly)
 	auth.GET("/users/:id", h.GetUserByID, managerOnly)
 	auth.PUT("/users/:id", h.UpdateUser, managerOnly)
 	auth.DELETE("/users/:id", h.DeleteUser, managerOnly)
+
+	// User skills (manager assigns, anyone can view)
+	auth.POST("/users/:id/skills/:skill_id", h.AssignSkillToUser, managerOnly)
+	auth.DELETE("/users/:id/skills/:skill_id", h.RemoveSkillFromUser, managerOnly)
+	auth.GET("/users/:id/skills", h.GetUserSkills)
+
+	// Skills
+	auth.POST("/skills", h.CreateSkill, managerOnly)
+	auth.GET("/skills", h.GetSkills)
+	auth.DELETE("/skills/:id", h.DeleteSkill, managerOnly)
 
 	// Tasks
 	auth.POST("/tasks", h.CreateTask, managerOnly)
@@ -77,6 +87,12 @@ func NewServer(jwtSecret []byte, h *handler.Handler, cfg *config.Config) *http.S
 	auth.DELETE("/tasks/:id", h.DeleteTask)
 	auth.POST("/tasks/:id/attachments", h.UploadAttachment)
 	auth.GET("/tasks/:id/history", h.GetTaskHistory)
+	auth.GET("/tasks/:id/recommended-employees", h.GetRecommendedEmployees, managerOnly)
+
+	// Task skills (only task creator manages)
+	auth.POST("/tasks/:id/skills/:skill_id", h.AddSkillToTask, managerOnly)
+	auth.DELETE("/tasks/:id/skills/:skill_id", h.RemoveSkillFromTask, managerOnly)
+	auth.GET("/tasks/:id/skills", h.GetTaskSkills)
 
 	// Comments
 	auth.POST("/comments", h.CreateComment)

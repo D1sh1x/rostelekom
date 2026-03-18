@@ -1,56 +1,78 @@
-import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
-import LoginPage from './pages/LoginPage';
-import DashboardPage from './pages/DashboardPage';
-import QuestsPage from './pages/QuestsPage';
-import Layout from './components/Layout';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { AnimatePresence } from 'framer-motion'
+import { AuthProvider, useAuth } from '@/contexts/AuthContext'
+import { ThemeProvider } from '@/components/theme-provider'
+import { Toaster } from '@/components/ui/toaster'
+import PageLayout from '@/components/layout/PageLayout'
+import LoginPage from '@/pages/LoginPage'
+import DashboardPage from '@/pages/DashboardPage'
+import TasksPage from '@/pages/TasksPage'
+import TaskDetailPage from '@/pages/TaskDetailPage'
+import EmployeesPage from '@/pages/EmployeesPage'
+import SkillsPage from '@/pages/SkillsPage'
 
-const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, loading } = useAuth();
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background text-blue-500 font-mono tracking-widest">
-        INITIALIZING NEURAL UPLINK...
-      </div>
-    );
-  }
-
-  if (!user) {
-    return <Navigate to="/login" />;
-  }
-
-  return <Layout>{children}</Layout>;
-};
-
-function App() {
-  return (
-    <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route 
-            path="/" 
-            element={
-              <ProtectedRoute>
-                <DashboardPage />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/quests" 
-            element={
-              <ProtectedRoute>
-                <QuestsPage />
-              </ProtectedRoute>
-            } 
-          />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </BrowserRouter>
-    </AuthProvider>
-  );
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, isLoading } = useAuth()
+  if (isLoading) return (
+    <div className="flex h-screen items-center justify-center bg-background">
+      <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+    </div>
+  )
+  return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />
 }
 
-export default App;
+function ManagerRoute({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth()
+  if (user?.role !== 'manager') return <Navigate to="/dashboard" replace />
+  return <>{children}</>
+}
+
+function AppRoutes() {
+  const { isAuthenticated } = useAuth()
+
+  return (
+    <AnimatePresence mode="wait">
+      <Routes>
+        <Route
+          path="/login"
+          element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />}
+        />
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <PageLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<Navigate to="/dashboard" replace />} />
+          <Route path="dashboard" element={<DashboardPage />} />
+          <Route path="tasks" element={<TasksPage />} />
+          <Route path="tasks/:id" element={<TaskDetailPage />} />
+          <Route
+            path="employees"
+            element={<ManagerRoute><EmployeesPage /></ManagerRoute>}
+          />
+          <Route
+            path="skills"
+            element={<ManagerRoute><SkillsPage /></ManagerRoute>}
+          />
+        </Route>
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      </Routes>
+    </AnimatePresence>
+  )
+}
+
+export default function App() {
+  return (
+    <ThemeProvider defaultTheme="dark" storageKey="skilltracker-theme">
+      <AuthProvider>
+        <BrowserRouter>
+          <AppRoutes />
+          <Toaster />
+        </BrowserRouter>
+      </AuthProvider>
+    </ThemeProvider>
+  )
+}

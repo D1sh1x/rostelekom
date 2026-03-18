@@ -33,7 +33,16 @@ func New(dsn string) (*Storage, error) {
 	sqlDB.SetMaxIdleConns(20)
 	sqlDB.SetConnMaxLifetime(5 * time.Minute)
 
-	if err := db.AutoMigrate(&models.User{}, &models.Task{}, &models.Comment{}, &models.FileAttachment{}, &models.TaskStatusHistory{}); err != nil {
+	if err := db.AutoMigrate(
+		&models.User{},
+		&models.Skill{},
+		&models.UserSkill{},
+		&models.Task{},
+		&models.TaskSkill{},
+		&models.Comment{},
+		&models.FileAttachment{},
+		&models.TaskStatusHistory{},
+	); err != nil {
 		return nil, err
 	}
 
@@ -44,6 +53,7 @@ func (s *Storage) User() repository.UserRepository       { return s }
 func (s *Storage) Task() repository.TaskRepository       { return s }
 func (s *Storage) Comment() repository.CommentRepository { return s }
 func (s *Storage) File() repository.FileRepository       { return s }
+func (s *Storage) Skill() repository.SkillRepository     { return s }
 
 // USERS
 
@@ -89,6 +99,16 @@ func (s *Storage) GetUsers(ctx context.Context) ([]*models.User, error) {
 	return out, err
 }
 
+func (s *Storage) GetEmployeesWithSkills(ctx context.Context) ([]*models.User, error) {
+	var out []*models.User
+	err := s.db.WithContext(ctx).
+		Where("role = ?", models.RoleEmployee).
+		Preload("Skills").
+		Order("id").
+		Find(&out).Error
+	return out, err
+}
+
 // TASKS
 
 func (s *Storage) CreateTask(ctx context.Context, t *models.Task) error {
@@ -97,7 +117,7 @@ func (s *Storage) CreateTask(ctx context.Context, t *models.Task) error {
 
 func (s *Storage) GetTaskByID(ctx context.Context, id int) (*models.Task, error) {
 	var t models.Task
-	if err := s.db.WithContext(ctx).First(&t, id).Error; err != nil {
+	if err := s.db.WithContext(ctx).Preload("RequiredSkills").First(&t, id).Error; err != nil {
 		return nil, err
 	}
 	return &t, nil
@@ -105,7 +125,11 @@ func (s *Storage) GetTaskByID(ctx context.Context, id int) (*models.Task, error)
 
 func (s *Storage) GetTasksByEmployeeID(ctx context.Context, employeeID int) ([]models.Task, error) {
 	var ts []models.Task
-	err := s.db.WithContext(ctx).Where("employee_id = ?", employeeID).Order("created_at DESC").Find(&ts).Error
+	err := s.db.WithContext(ctx).
+		Where("employee_id = ?", employeeID).
+		Preload("RequiredSkills").
+		Order("created_at DESC").
+		Find(&ts).Error
 	return ts, err
 }
 
@@ -115,6 +139,25 @@ func (s *Storage) UpdateTask(ctx context.Context, t *models.Task) error {
 
 func (s *Storage) DeleteTask(ctx context.Context, id int) error {
 	return s.db.WithContext(ctx).Delete(&models.Task{}, id).Error
+}
+
+func (s *Storage) AddSkillToTask(ctx context.Context, taskID int, skillID int) error {
+	return s.db.WithContext(ctx).Create(&models.TaskSkill{TaskID: taskID, SkillID: skillID}).Error
+}
+
+func (s *Storage) RemoveSkillFromTask(ctx context.Context, taskID int, skillID int) error {
+	return s.db.WithContext(ctx).
+		Where("task_id = ? AND skill_id = ?", taskID, skillID).
+		Delete(&models.TaskSkill{}).Error
+}
+
+func (s *Storage) GetTaskSkills(ctx context.Context, taskID int) ([]models.Skill, error) {
+	var skills []models.Skill
+	err := s.db.WithContext(ctx).
+		Joins("JOIN task_skills ON task_skills.skill_id = skills.id").
+		Where("task_skills.task_id = ?", taskID).
+		Find(&skills).Error
+	return skills, err
 }
 
 // COMMENTS
@@ -162,7 +205,7 @@ func (s *Storage) GetHistoryByTaskID(ctx context.Context, taskID int) ([]models.
 }
 
 func (s *Storage) ListTasks(ctx context.Context, filter dto.TaskFilter) ([]models.Task, error) {
-	query := s.db.WithContext(ctx)
+	query := s.db.WithContext(ctx).Preload("RequiredSkills")
 
 	if filter.Status != "" {
 		query = query.Where("status = ?", filter.Status)
@@ -191,4 +234,52 @@ func (s *Storage) ListTasks(ctx context.Context, filter dto.TaskFilter) ([]model
 	var out []models.Task
 	err := query.Order("created_at DESC").Find(&out).Error
 	return out, err
+}
+
+// SKILLS
+
+func (s *Storage) CreateSkill(ctx context.Context, skill *models.Skill) error {
+	return s.db.WithContext(ctx).Create(skill).Error
+}
+
+func (s *Storage) GetSkillByID(ctx context.Context, id int) (*models.Skill, error) {
+	var skill models.Skill
+	if err := s.db.WithContext(ctx).First(&skill, id).Error; err != nil {
+		return nil, err
+	}
+	return &skill, nil
+}
+
+func (s *Storage) GetSkills(ctx context.Context) ([]models.Skill, error) {
+	var skills []models.Skill
+	err := s.db.WithContext(ctx).Order("name").Find(&skills).Error
+	return skills, err
+}
+
+func (s *Storage) DeleteSkill(ctx context.Context, id int) error {
+	// Also remove associations
+	s.db.WithContext(ctx).Where("skill_id = ?", id).Delete(&models.UserSkill{})
+	s.db.WithContext(ctx).Where("skill_id = ?", id).Delete(&models.TaskSkill{})
+	return s.db.WithContext(ctx).Delete(&models.Skill{}, id).Error
+}
+
+func (s *Storage) AssignSkillToUser(ctx context.Context, userID int, skillID int) error {
+	return s.db.WithContext(ctx).
+		Where(models.UserSkill{UserID: userID, SkillID: skillID}).
+		FirstOrCreate(&models.UserSkill{UserID: userID, SkillID: skillID}).Error
+}
+
+func (s *Storage) RemoveSkillFromUser(ctx context.Context, userID int, skillID int) error {
+	return s.db.WithContext(ctx).
+		Where("user_id = ? AND skill_id = ?", userID, skillID).
+		Delete(&models.UserSkill{}).Error
+}
+
+func (s *Storage) GetUserSkills(ctx context.Context, userID int) ([]models.Skill, error) {
+	var skills []models.Skill
+	err := s.db.WithContext(ctx).
+		Joins("JOIN user_skills ON user_skills.skill_id = skills.id").
+		Where("user_skills.user_id = ?", userID).
+		Find(&skills).Error
+	return skills, err
 }

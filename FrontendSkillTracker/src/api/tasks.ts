@@ -1,51 +1,59 @@
-import api from './client';
-import type { Task, TaskFilters, Comment, TaskStatusHistory } from '../types';
+import { api } from './client'
+import type { Task, TaskRequest, TaskFilter, TaskHistory, Comment, Attachment, RecommendedEmployee, Skill } from '@/types'
 
-export const taskApi = {
-  getTasks: async (filters?: TaskFilters): Promise<Task[]> => {
-    const params = new URLSearchParams();
-    if (filters) {
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value !== undefined && value !== '') {
-          params.append(key, value.toString());
-        }
-      });
-    }
-    const response = await api.get<Task[]>('/tasks', { params });
-    return response.data;
+export const tasksApi = {
+  list: (filter?: TaskFilter) =>
+    api.get<Task[]>('/tasks', { params: filter }).then((r) => r.data),
+
+  myTasks: () =>
+    api.get<Task[]>('/tasks/my').then((r) => r.data),
+
+  get: (id: number) =>
+    api.get<Task>(`/tasks/${id}`).then((r) => r.data),
+
+  create: (data: TaskRequest) =>
+    api.post<Task>('/tasks', data).then((r) => r.data),
+
+  update: (id: number, data: Partial<TaskRequest>) =>
+    api.put(`/tasks/${id}`, data),
+
+  delete: (id: number) =>
+    api.delete(`/tasks/${id}`),
+
+  getHistory: (id: number) =>
+    api.get<TaskHistory[]>(`/tasks/${id}/history`).then((r) => r.data),
+
+  getSkills: (id: number) =>
+    api.get<Skill[]>(`/tasks/${id}/skills`).then((r) => r.data),
+
+  addSkill: (taskId: number, skillId: number) =>
+    api.post(`/tasks/${taskId}/skills/${skillId}`),
+
+  removeSkill: (taskId: number, skillId: number) =>
+    api.delete(`/tasks/${taskId}/skills/${skillId}`),
+
+  getRecommendedEmployees: (id: number) =>
+    api.get<RecommendedEmployee[]>(`/tasks/${id}/recommended-employees`).then((r) => r.data),
+
+  uploadAttachment: (id: number, file: File) => {
+    const form = new FormData()
+    form.append('file', file)
+    return api.post<Attachment>(`/tasks/${id}/attachments`, form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }).then((r) => r.data)
   },
+}
 
-  getTaskById: async (id: number): Promise<Task> => {
-    const response = await api.get<Task>(`/tasks/${id}`);
-    return response.data;
-  },
+export const commentsApi = {
+  list: (taskId: number) =>
+    api.get<Comment[]>(`/tasks/${taskId}/comments`).then((r) => r.data),
 
-  updateTask: async (id: number, data: Partial<Task>): Promise<Task> => {
-    const response = await api.put<Task>(`/tasks/${id}`, data);
-    return response.data;
-  },
+  create: (taskId: number, text: string) =>
+    api.post<Comment>('/comments', { task_id: taskId, text }).then((r) => r.data),
 
-  createTask: async (data: Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'progress'>): Promise<Task> => {
-    const response = await api.post<Task>('/tasks', data);
-    return response.data;
-  },
+  update: (id: number, text: string) =>
+    api.put(`/comments/${id}`, { text }),
 
-  deleteTask: async (id: number): Promise<void> => {
-    await api.delete(`/tasks/${id}`);
-  },
-
-  getComments: async (taskId: number): Promise<Comment[]> => {
-    const response = await api.get<Comment[]>(`/tasks/${taskId}/comments`);
-    return response.data;
-  },
-
-  addComment: async (taskId: number, text: string): Promise<Comment> => {
-    const response = await api.post<Comment>('/comments', { taskId, text });
-    return response.data;
-  },
-
-  getHistory: async (taskId: number): Promise<TaskStatusHistory[]> => {
-    const response = await api.get<TaskStatusHistory[]>(`/tasks/${taskId}/history`);
-    return response.data;
-  }
-};
+  delete: (id: number) =>
+    api.delete(`/comments/${id}`),
+}

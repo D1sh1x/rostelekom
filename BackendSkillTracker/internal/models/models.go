@@ -28,6 +28,8 @@ type User struct {
 	CreatedAt    time.Time      `gorm:"autoCreateTime"`
 	UpdatedAt    time.Time      `gorm:"autoUpdateTime"`
 	DeletedAt    gorm.DeletedAt `gorm:"index"`
+
+	Skills []Skill `gorm:"many2many:user_skills;"`
 }
 
 type Task struct {
@@ -43,10 +45,11 @@ type Task struct {
 	UpdatedAt   time.Time      `gorm:"autoUpdateTime"`
 	DeletedAt   gorm.DeletedAt `gorm:"index"`
 
-	Employee User `gorm:"foreignKey:EmployeeID"`
-	Creator  User `gorm:"foreignKey:CreatorID"`
-	Attachments []FileAttachment `gorm:"foreignKey:TaskID"`
-	History     []TaskStatusHistory `gorm:"foreignKey:TaskID"`
+	Employee       User                `gorm:"foreignKey:EmployeeID"`
+	Creator        User                `gorm:"foreignKey:CreatorID"`
+	Attachments    []FileAttachment    `gorm:"foreignKey:TaskID"`
+	History        []TaskStatusHistory `gorm:"foreignKey:TaskID"`
+	RequiredSkills []Skill             `gorm:"many2many:task_skills;"`
 }
 
 type TaskStatusHistory struct {
@@ -79,4 +82,24 @@ type Comment struct {
 
 	Task Task `gorm:"foreignKey:TaskID"`
 	User User `gorm:"foreignKey:UserID"`
+}
+
+type Skill struct {
+	ID          int       `gorm:"primaryKey"`
+	Name        string    `gorm:"unique;not null;size:100"`
+	Description string    `gorm:"size:500"`
+	CreatedAt   time.Time `gorm:"autoCreateTime"`
+
+	Users []User `gorm:"many2many:user_skills;"`
+	Tasks []Task `gorm:"many2many:task_skills;"`
+}
+
+type UserSkill struct {
+	UserID  int `gorm:"primaryKey"`
+	SkillID int `gorm:"primaryKey"`
+}
+
+type TaskSkill struct {
+	TaskID  int `gorm:"primaryKey"`
+	SkillID int `gorm:"primaryKey"`
 }

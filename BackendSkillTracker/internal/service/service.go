@@ -16,6 +16,8 @@ type ServiceInterface interface {
     User() UserService
     Task() TaskService
     Comment() CommentService
+    Skill() SkillService
+    SeedAdmin(ctx context.Context, adminPassword string) error
 }
 
 type UserService interface {
@@ -38,6 +40,10 @@ type TaskService interface {
     UploadAttachment(ctx context.Context, taskID int, userID int, fileName string, filePath string, fileSize int64) (*dto.AttachmentResponse, error)
     GetTaskHistory(ctx context.Context, taskID int) ([]*dto.TaskHistoryResponse, error)
     ListTasks(ctx context.Context, filter dto.TaskFilter) ([]*dto.TaskResponse, error)
+    AddSkillToTask(ctx context.Context, taskID int, skillID int, userID int) error
+    RemoveSkillFromTask(ctx context.Context, taskID int, skillID int, userID int) error
+    GetTaskSkills(ctx context.Context, taskID int) ([]*dto.SkillResponse, error)
+    GetRecommendedEmployees(ctx context.Context, taskID int) ([]*dto.RecommendedEmployeeResponse, error)
 }
 
 type CommentService interface {
@@ -45,6 +51,15 @@ type CommentService interface {
     GetCommentsByTaskID(ctx context.Context, taskID int) ([]*dto.CommentResponse, error)
     UpdateComment(ctx context.Context, id int, userID int, text string) error
     DeleteComment(ctx context.Context, id int, userID int) error
+}
+
+type SkillService interface {
+    CreateSkill(ctx context.Context, req *dto.SkillRequest) (*dto.SkillResponse, error)
+    GetSkills(ctx context.Context) ([]*dto.SkillResponse, error)
+    DeleteSkill(ctx context.Context, id int) error
+    AssignSkillToUser(ctx context.Context, userID int, skillID int) error
+    RemoveSkillFromUser(ctx context.Context, userID int, skillID int) error
+    GetUserSkills(ctx context.Context, userID int) ([]*dto.SkillResponse, error)
 }
 
 type services struct {
@@ -55,6 +70,29 @@ type services struct {
 
 func New(repo repository.Repository, l zerolog.Logger, jwtSecret []byte) ServiceInterface {
     return &services{repo: repo, logger: l, jwtSecret: jwtSecret}
+}
+
+// SeedAdmin creates the admin account if it doesn't exist
+func (s *services) SeedAdmin(ctx context.Context, adminPassword string) error {
+    _, err := s.repo.User().GetUserByUsername(ctx, "admin")
+    if err == nil {
+        return nil // already exists
+    }
+    hash, err := bcrypt.GenerateFromPassword([]byte(adminPassword), bcrypt.DefaultCost)
+    if err != nil {
+        return err
+    }
+    u := &models.User{
+        Username:     "admin",
+        PasswordHash: string(hash),
+        Role:         models.RoleManager,
+        Name:         "Administrator",
+    }
+    if err := s.repo.User().CreateUser(ctx, u); err != nil {
+        return err
+    }
+    s.logger.Info().Str("username", "admin").Msg("Admin account created")
+    return nil
 }
 
 // USER
@@ -97,19 +135,16 @@ func (s *services) Login(ctx context.Context, req *dto.LoginRequest) (*dto.Login
 }
 
 func (s *services) RefreshToken(ctx context.Context, req *dto.RefreshRequest) (*dto.LoginResponse, error) {
-	// 1. Validate the refresh token signature and expiration
 	_, err := jwtutil.ValidateRefreshToken(req.RefreshToken, s.jwtSecret)
 	if err != nil {
 		return nil, errors.New("invalid refresh token")
 	}
 
-	// 2. Efficiently find user by refresh token
 	u, err := s.repo.User().GetUserByRefreshToken(ctx, req.RefreshToken)
 	if err != nil {
 		return nil, errors.New("invalid refresh token")
 	}
 
-	// 3. Rotation: generate new pair
 	newAccessToken, err := jwtutil.GenerateAccessToken(u.ID, u.Username, string(u.Role), s.jwtSecret)
 	if err != nil {
 		return nil, err
@@ -119,7 +154,6 @@ func (s *services) RefreshToken(ctx context.Context, req *dto.RefreshRequest) (*
 		return nil, err
 	}
 
-	// 4. Update refresh token in DB
 	u.RefreshToken = newRefreshToken
 	if err := s.repo.User().UpdateUser(ctx, u); err != nil {
 		return nil, err
@@ -147,14 +181,19 @@ func (s *services) Logout(ctx context.Context, userID int) error {
 }
 
 func (s *services) CreateUser(ctx context.Context, req *dto.UserRequest) (*dto.UserResponse, error) {
-    hash, _ := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
-    u := &models.User{
-        Username: req.Username,
-        PasswordHash: string(hash),
-        Role: models.Role(req.Role),
-        Name: req.Name,
+    hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+    if err != nil {
+        return nil, errors.New("failed to hash password")
     }
-    if err := s.repo.User().CreateUser(ctx, u); err != nil { return nil, err }
+    u := &models.User{
+        Username:     req.Username,
+        PasswordHash: string(hash),
+        Role:         models.Role(req.Role),
+        Name:         req.Name,
+    }
+    if err := s.repo.User().CreateUser(ctx, u); err != nil {
+        return nil, err
+    }
     return &dto.UserResponse{ID: u.ID, Username: u.Username, Role: string(u.Role), Name: u.Name}, nil
 }
 
@@ -173,7 +212,8 @@ func (s *services) UpdateUser(ctx context.Context, id int, req *dto.UserRequest)
     if err != nil { return err }
     if req.Username != "" { u.Username = req.Username }
     if req.Password != "" {
-        hash, _ := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+        hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+        if err != nil { return errors.New("failed to hash password") }
         u.PasswordHash = string(hash)
     }
     if req.Role != "" { u.Role = models.Role(req.Role) }
@@ -195,49 +235,62 @@ func (s *services) GetUserByID(ctx context.Context, id int) (*dto.UserResponse, 
 
 func (s *services) Task() TaskService { return s }
 
+func skillsToDTO(skills []models.Skill) []dto.SkillResponse {
+    out := make([]dto.SkillResponse, 0, len(skills))
+    for _, sk := range skills {
+        out = append(out, dto.SkillResponse{
+            ID: sk.ID, Name: sk.Name, Description: sk.Description, CreatedAt: sk.CreatedAt,
+        })
+    }
+    return out
+}
+
+func taskToDTO(t *models.Task) *dto.TaskResponse {
+    return &dto.TaskResponse{
+        ID:             t.ID,
+        EmployeeID:     t.EmployeeID,
+        CreatorID:      t.CreatorID,
+        Title:          t.Title,
+        Description:    t.Description,
+        Deadline:       t.Deadline,
+        Status:         string(t.Status),
+        Progress:       t.Progress,
+        RequiredSkills: skillsToDTO(t.RequiredSkills),
+        CreatedAt:      t.CreatedAt,
+        UpdatedAt:      t.UpdatedAt,
+    }
+}
+
 func (s *services) CreateTask(ctx context.Context, req *dto.TaskRequest, creatorID int) (*dto.TaskResponse, error) {
     if req.EmployeeID == 0 || req.Title == "" { return nil, errors.New("invalid input") }
     deadline, err := time.Parse(time.RFC3339, req.Deadline)
     if err != nil { return nil, errors.New("invalid deadline format") }
     t := &models.Task{
-        EmployeeID: req.EmployeeID,
-        CreatorID:  creatorID,
-        Title: req.Title,
+        EmployeeID:  req.EmployeeID,
+        CreatorID:   creatorID,
+        Title:       req.Title,
         Description: req.Description,
-        Deadline: deadline,
-        Status: models.TaskStatus(req.Status),
-        Progress: req.Progress,
+        Deadline:    deadline,
+        Status:      models.TaskStatus(req.Status),
+        Progress:    req.Progress,
     }
     if t.Status == "" { t.Status = models.StatusPending }
     if err := s.repo.Task().CreateTask(ctx, t); err != nil { return nil, err }
-    return &dto.TaskResponse{
-        ID: t.ID, EmployeeID: t.EmployeeID, CreatorID: t.CreatorID,
-        Title: t.Title, Description: t.Description, Deadline: t.Deadline,
-        Status: string(t.Status), Progress: t.Progress, CreatedAt: t.CreatedAt, UpdatedAt: t.UpdatedAt,
-    }, nil
+    return taskToDTO(t), nil
 }
 
 func (s *services) GetTaskByID(ctx context.Context, id int) (*dto.TaskResponse, error) {
     t, err := s.repo.Task().GetTaskByID(ctx, id)
     if err != nil { return nil, err }
-    return &dto.TaskResponse{
-        ID: t.ID, EmployeeID: t.EmployeeID, CreatorID: t.CreatorID,
-        Title: t.Title, Description: t.Description, Deadline: t.Deadline,
-        Status: string(t.Status), Progress: t.Progress, CreatedAt: t.CreatedAt, UpdatedAt: t.UpdatedAt,
-    }, nil
+    return taskToDTO(t), nil
 }
 
 func (s *services) GetTasksByEmployeeID(ctx context.Context, employeeID int) ([]*dto.TaskResponse, error) {
     ts, err := s.repo.Task().GetTasksByEmployeeID(ctx, employeeID)
     if err != nil { return nil, err }
     out := make([]*dto.TaskResponse, 0, len(ts))
-    for _, t := range ts {
-        t2 := t
-        out = append(out, &dto.TaskResponse{
-            ID: t2.ID, EmployeeID: t2.EmployeeID, CreatorID: t2.CreatorID,
-            Title: t2.Title, Description: t2.Description, Deadline: t2.Deadline,
-            Status: string(t2.Status), Progress: t2.Progress, CreatedAt: t2.CreatedAt, UpdatedAt: t2.UpdatedAt,
-        })
+    for i := range ts {
+        out = append(out, taskToDTO(&ts[i]))
     }
     return out, nil
 }
@@ -289,6 +342,168 @@ func (s *services) DeleteTask(ctx context.Context, id int, userID int) error {
     return s.repo.Task().DeleteTask(ctx, id)
 }
 
+func (s *services) UploadAttachment(ctx context.Context, taskID int, userID int, fileName string, filePath string, fileSize int64) (*dto.AttachmentResponse, error) {
+	t, err := s.repo.Task().GetTaskByID(ctx, taskID)
+	if err != nil {
+		return nil, errors.New("task not found")
+	}
+	if t.CreatorID != userID && t.EmployeeID != userID {
+		return nil, errors.New("forbidden")
+	}
+
+	f := &models.FileAttachment{
+		TaskID:   taskID,
+		FileName: fileName,
+		FilePath: filePath,
+		FileSize: fileSize,
+	}
+
+	if err := s.repo.File().CreateAttachment(ctx, f); err != nil {
+		return nil, err
+	}
+
+	return &dto.AttachmentResponse{
+		ID:         f.ID,
+		TaskID:     f.TaskID,
+		FileName:   f.FileName,
+		FileSize:   f.FileSize,
+		UploadedAt: f.UploadedAt,
+	}, nil
+}
+
+func (s *services) GetTaskHistory(ctx context.Context, taskID int) ([]*dto.TaskHistoryResponse, error) {
+	history, err := s.repo.Task().GetHistoryByTaskID(ctx, taskID)
+	if err != nil {
+		return nil, err
+	}
+
+	var out []*dto.TaskHistoryResponse
+	for _, h := range history {
+		out = append(out, &dto.TaskHistoryResponse{
+			ID:        h.ID,
+			TaskID:    h.TaskID,
+			OldStatus: string(h.OldStatus),
+			NewStatus: string(h.NewStatus),
+			ChangedBy: h.ChangedBy,
+			CreatedAt: h.CreatedAt,
+		})
+	}
+	return out, nil
+}
+
+func (s *services) ListTasks(ctx context.Context, filter dto.TaskFilter) ([]*dto.TaskResponse, error) {
+	tasks, err := s.repo.Task().ListTasks(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	var out []*dto.TaskResponse
+	for i := range tasks {
+		out = append(out, taskToDTO(&tasks[i]))
+	}
+	return out, nil
+}
+
+func (s *services) AddSkillToTask(ctx context.Context, taskID int, skillID int, userID int) error {
+    t, err := s.repo.Task().GetTaskByID(ctx, taskID)
+    if err != nil { return errors.New("task not found") }
+    if t.CreatorID != userID {
+        return errors.New("forbidden")
+    }
+    if _, err := s.repo.Skill().GetSkillByID(ctx, skillID); err != nil {
+        return errors.New("skill not found")
+    }
+    return s.repo.Task().AddSkillToTask(ctx, taskID, skillID)
+}
+
+func (s *services) RemoveSkillFromTask(ctx context.Context, taskID int, skillID int, userID int) error {
+    t, err := s.repo.Task().GetTaskByID(ctx, taskID)
+    if err != nil { return errors.New("task not found") }
+    if t.CreatorID != userID {
+        return errors.New("forbidden")
+    }
+    return s.repo.Task().RemoveSkillFromTask(ctx, taskID, skillID)
+}
+
+func (s *services) GetTaskSkills(ctx context.Context, taskID int) ([]*dto.SkillResponse, error) {
+    skills, err := s.repo.Task().GetTaskSkills(ctx, taskID)
+    if err != nil { return nil, err }
+    out := make([]*dto.SkillResponse, 0, len(skills))
+    for _, sk := range skills {
+        sk2 := sk
+        out = append(out, &dto.SkillResponse{ID: sk2.ID, Name: sk2.Name, Description: sk2.Description, CreatedAt: sk2.CreatedAt})
+    }
+    return out, nil
+}
+
+func (s *services) GetRecommendedEmployees(ctx context.Context, taskID int) ([]*dto.RecommendedEmployeeResponse, error) {
+    // Get task required skills
+    taskSkills, err := s.repo.Task().GetTaskSkills(ctx, taskID)
+    if err != nil { return nil, err }
+
+    // Get all employees with their skills
+    employees, err := s.repo.User().GetEmployeesWithSkills(ctx)
+    if err != nil { return nil, err }
+
+    // Build required skill set
+    requiredSet := make(map[int]string, len(taskSkills))
+    for _, sk := range taskSkills {
+        requiredSet[sk.ID] = sk.Name
+    }
+
+    out := make([]*dto.RecommendedEmployeeResponse, 0, len(employees))
+    for _, emp := range employees {
+        skillDTOs := make([]dto.SkillResponse, 0, len(emp.Skills))
+        for _, sk := range emp.Skills {
+            skillDTOs = append(skillDTOs, dto.SkillResponse{
+                ID: sk.ID, Name: sk.Name, Description: sk.Description, CreatedAt: sk.CreatedAt,
+            })
+        }
+
+        matched := []string{}
+        missing := []string{}
+
+        for skillID, skillName := range requiredSet {
+            found := false
+            for _, empSkill := range emp.Skills {
+                if empSkill.ID == skillID {
+                    found = true
+                    break
+                }
+            }
+            if found {
+                matched = append(matched, skillName)
+            } else {
+                missing = append(missing, skillName)
+            }
+        }
+
+        matchScore := 0
+        if len(requiredSet) > 0 {
+            matchScore = len(matched) * 100 / len(requiredSet)
+        }
+
+        out = append(out, &dto.RecommendedEmployeeResponse{
+            ID:            emp.ID,
+            Username:      emp.Username,
+            Name:          emp.Name,
+            Skills:        skillDTOs,
+            MatchScore:    matchScore,
+            MatchedSkills: matched,
+            MissingSkills: missing,
+        })
+    }
+
+    // Sort by match_score DESC (simple insertion sort for small slices)
+    for i := 1; i < len(out); i++ {
+        for j := i; j > 0 && out[j].MatchScore > out[j-1].MatchScore; j-- {
+            out[j], out[j-1] = out[j-1], out[j]
+        }
+    }
+
+    return out, nil
+}
+
 // COMMENTS
 
 func (s *services) Comment() CommentService { return s }
@@ -329,75 +544,59 @@ func (s *services) DeleteComment(ctx context.Context, id int, userID int) error 
 	return s.repo.Comment().DeleteComment(ctx, id)
 }
 
-func (s *services) UploadAttachment(ctx context.Context, taskID int, userID int, fileName string, filePath string, fileSize int64) (*dto.AttachmentResponse, error) {
-	// Check if task exists and user has access
-	t, err := s.repo.Task().GetTaskByID(ctx, taskID)
-	if err != nil {
-		return nil, errors.New("task not found")
-	}
-	if t.CreatorID != userID && t.EmployeeID != userID {
-		return nil, errors.New("forbidden")
-	}
+// SKILLS
 
-	f := &models.FileAttachment{
-		TaskID:   taskID,
-		FileName: fileName,
-		FilePath: filePath,
-		FileSize: fileSize,
-	}
+func (s *services) Skill() SkillService { return s }
 
-	if err := s.repo.File().CreateAttachment(ctx, f); err != nil {
-		return nil, err
-	}
-
-	return &dto.AttachmentResponse{
-		ID:         f.ID,
-		TaskID:     f.TaskID,
-		FileName:   f.FileName,
-		FileSize:   f.FileSize,
-		UploadedAt: f.UploadedAt,
-	}, nil
-}
-func (s *services) GetTaskHistory(ctx context.Context, taskID int) ([]*dto.TaskHistoryResponse, error) {
-	history, err := s.repo.Task().GetHistoryByTaskID(ctx, taskID)
-	if err != nil {
-		return nil, err
-	}
-
-	var out []*dto.TaskHistoryResponse
-	for _, h := range history {
-		out = append(out, &dto.TaskHistoryResponse{
-			ID:        h.ID,
-			TaskID:    h.TaskID,
-			OldStatus: string(h.OldStatus),
-			NewStatus: string(h.NewStatus),
-			ChangedBy: h.ChangedBy,
-			CreatedAt: h.CreatedAt,
-		})
-	}
-	return out, nil
+func (s *services) CreateSkill(ctx context.Context, req *dto.SkillRequest) (*dto.SkillResponse, error) {
+    skill := &models.Skill{
+        Name:        req.Name,
+        Description: req.Description,
+    }
+    if err := s.repo.Skill().CreateSkill(ctx, skill); err != nil {
+        return nil, err
+    }
+    return &dto.SkillResponse{
+        ID: skill.ID, Name: skill.Name, Description: skill.Description, CreatedAt: skill.CreatedAt,
+    }, nil
 }
 
-func (s *services) ListTasks(ctx context.Context, filter dto.TaskFilter) ([]*dto.TaskResponse, error) {
-	tasks, err := s.repo.Task().ListTasks(ctx, filter)
-	if err != nil {
-		return nil, err
-	}
+func (s *services) GetSkills(ctx context.Context) ([]*dto.SkillResponse, error) {
+    skills, err := s.repo.Skill().GetSkills(ctx)
+    if err != nil { return nil, err }
+    out := make([]*dto.SkillResponse, 0, len(skills))
+    for _, sk := range skills {
+        sk2 := sk
+        out = append(out, &dto.SkillResponse{ID: sk2.ID, Name: sk2.Name, Description: sk2.Description, CreatedAt: sk2.CreatedAt})
+    }
+    return out, nil
+}
 
-	var out []*dto.TaskResponse
-	for _, t := range tasks {
-		out = append(out, &dto.TaskResponse{
-			ID:          t.ID,
-			EmployeeID:  t.EmployeeID,
-			CreatorID:   t.CreatorID,
-			Title:       t.Title,
-			Description: t.Description,
-			Deadline:    t.Deadline,
-			Status:      string(t.Status),
-			Progress:    t.Progress,
-			CreatedAt:   t.CreatedAt,
-			UpdatedAt:   t.UpdatedAt,
-		})
-	}
-	return out, nil
+func (s *services) DeleteSkill(ctx context.Context, id int) error {
+    return s.repo.Skill().DeleteSkill(ctx, id)
+}
+
+func (s *services) AssignSkillToUser(ctx context.Context, userID int, skillID int) error {
+    if _, err := s.repo.User().GetUserByID(ctx, userID); err != nil {
+        return errors.New("user not found")
+    }
+    if _, err := s.repo.Skill().GetSkillByID(ctx, skillID); err != nil {
+        return errors.New("skill not found")
+    }
+    return s.repo.Skill().AssignSkillToUser(ctx, userID, skillID)
+}
+
+func (s *services) RemoveSkillFromUser(ctx context.Context, userID int, skillID int) error {
+    return s.repo.Skill().RemoveSkillFromUser(ctx, userID, skillID)
+}
+
+func (s *services) GetUserSkills(ctx context.Context, userID int) ([]*dto.SkillResponse, error) {
+    skills, err := s.repo.Skill().GetUserSkills(ctx, userID)
+    if err != nil { return nil, err }
+    out := make([]*dto.SkillResponse, 0, len(skills))
+    for _, sk := range skills {
+        sk2 := sk
+        out = append(out, &dto.SkillResponse{ID: sk2.ID, Name: sk2.Name, Description: sk2.Description, CreatedAt: sk2.CreatedAt})
+    }
+    return out, nil
 }

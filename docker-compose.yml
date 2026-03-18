@@ -11,13 +11,20 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./BackendSkillTracker/migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d skillstracker"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
 
   backend:
     build:
       context: ./BackendSkillTracker
       dockerfile: Dockerfile
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     environment:
       CONFIG_PATH: /app/config/config.yaml
     ports:
@@ -32,7 +39,7 @@ services:
       context: ./FrontendSkillTracker
       dockerfile: Dockerfile
     ports:
-      - "3000:3000"
+      - "3000:80"
     restart: always
     depends_on:
       - backend

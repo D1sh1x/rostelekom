@@ -14,6 +14,7 @@ type UserRepository interface {
     UpdateUser(ctx context.Context, user *models.User) error
     DeleteUser(ctx context.Context, id int) error
     GetUsers(ctx context.Context) ([]*models.User, error)
+    GetEmployeesWithSkills(ctx context.Context) ([]*models.User, error)
 }
 
 type TaskRepository interface {
@@ -25,6 +26,9 @@ type TaskRepository interface {
     ListTasks(ctx context.Context, filter dto.TaskFilter) ([]models.Task, error)
     CreateHistory(ctx context.Context, h *models.TaskStatusHistory) error
     GetHistoryByTaskID(ctx context.Context, taskID int) ([]models.TaskStatusHistory, error)
+    AddSkillToTask(ctx context.Context, taskID int, skillID int) error
+    RemoveSkillFromTask(ctx context.Context, taskID int, skillID int) error
+    GetTaskSkills(ctx context.Context, taskID int) ([]models.Skill, error)
 }
 
 type CommentRepository interface {
@@ -39,9 +43,20 @@ type FileRepository interface {
 	CreateAttachment(ctx context.Context, f *models.FileAttachment) error
 }
 
+type SkillRepository interface {
+    CreateSkill(ctx context.Context, skill *models.Skill) error
+    GetSkillByID(ctx context.Context, id int) (*models.Skill, error)
+    GetSkills(ctx context.Context) ([]models.Skill, error)
+    DeleteSkill(ctx context.Context, id int) error
+    AssignSkillToUser(ctx context.Context, userID int, skillID int) error
+    RemoveSkillFromUser(ctx context.Context, userID int, skillID int) error
+    GetUserSkills(ctx context.Context, userID int) ([]models.Skill, error)
+}
+
 type Repository interface {
 	User() UserRepository
 	Task() TaskRepository
 	Comment() CommentRepository
 	File() FileRepository
+	Skill() SkillRepository
 }

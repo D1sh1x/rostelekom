@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+	"os"
 	"skilltracker/internal/config"
 	"skilltracker/internal/handler"
 	"skilltracker/internal/service"
@@ -37,6 +39,15 @@ func main() {
 	logger := log.With().Str("app", "skilltracker").Logger()
 
 	srv := service.New(store, logger, []byte(cfg.Auth.JWTSecret))
+
+	adminPassword := os.Getenv("ADMIN_PASSWORD")
+	if adminPassword == "" {
+		adminPassword = "admin123"
+	}
+	if err := srv.SeedAdmin(context.Background(), adminPassword); err != nil {
+		logger.Error().Err(err).Msg("failed to seed admin account")
+	}
+
 	h := handler.NewHandler(srv)
 	httpSrv := transport.NewServer([]byte(cfg.Auth.JWTSecret), h, cfg)
 	logger.Info().Msg("Server Running")
