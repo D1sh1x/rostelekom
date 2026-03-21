@@ -21,6 +21,7 @@ export default function SkillsPage() {
   const { data: skills = [] } = useQuery({
     queryKey: ['skills'],
     queryFn: () => skillsApi.list(),
+    select: (data) => data ?? [],
   })
 
   const createMutation = useMutation({

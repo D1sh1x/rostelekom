@@ -35,16 +35,19 @@ export default function TasksPage() {
     queryKey: ['tasks'],
     queryFn: () => tasksApi.list(),
     enabled: isManager,
+    select: (data) => data ?? [],
   })
   const { data: myTasks = [] } = useQuery({
     queryKey: ['my-tasks'],
     queryFn: () => tasksApi.myTasks(),
     enabled: !isManager,
+    select: (data) => data ?? [],
   })
   const { data: employees = [] } = useQuery({
     queryKey: ['users'],
     queryFn: () => usersApi.list(),
     enabled: isManager,
+    select: (data) => data ?? [],
   })
 
   const rawTasks = isManager ? allTasks : myTasks

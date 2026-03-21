@@ -44,10 +44,10 @@ export default function DashboardPage() {
   const { user } = useAuth()
   const isManager = user?.role === 'manager'
 
-  const { data: allTasks = [] } = useQuery({ queryKey: ['tasks'], queryFn: () => tasksApi.list() })
-  const { data: myTasks = [] } = useQuery({ queryKey: ['my-tasks'], queryFn: () => tasksApi.myTasks() })
-  const { data: users = [] } = useQuery({ queryKey: ['users'], queryFn: () => usersApi.list(), enabled: isManager })
-  const { data: skills = [] } = useQuery({ queryKey: ['skills'], queryFn: () => skillsApi.list() })
+  const { data: allTasks = [] } = useQuery({ queryKey: ['tasks'], queryFn: () => tasksApi.list(), select: (data) => data ?? [] })
+  const { data: myTasks = [] } = useQuery({ queryKey: ['my-tasks'], queryFn: () => tasksApi.myTasks(), select: (data) => data ?? [] })
+  const { data: users = [] } = useQuery({ queryKey: ['users'], queryFn: () => usersApi.list(), enabled: isManager, select: (data) => data ?? [] })
+  const { data: skills = [] } = useQuery({ queryKey: ['skills'], queryFn: () => skillsApi.list(), select: (data) => data ?? [] })
 
   const tasks = isManager ? allTasks : myTasks
 

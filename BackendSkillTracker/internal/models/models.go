@@ -34,12 +34,12 @@ type User struct {
 
 type Task struct {
 	ID          int            `gorm:"primaryKey"`
-	EmployeeID  int            `gorm:"not null"`
-	CreatorID   int            `gorm:"not null"`
+	EmployeeID  int            `gorm:"not null;index"`
+	CreatorID   int            `gorm:"not null;index"`
 	Title       string         `gorm:"not null;size:200"`
 	Description string         `gorm:"not null"`
-	Deadline    time.Time      `gorm:"not null"`
-	Status      TaskStatus     `gorm:"not null;type:varchar(20);default:pending"`
+	Deadline    time.Time      `gorm:"not null;index"`
+	Status      TaskStatus     `gorm:"not null;type:varchar(20);default:pending;index"`
 	Progress    int            `gorm:"not null;default:0"`
 	CreatedAt   time.Time      `gorm:"autoCreateTime"`
 	UpdatedAt   time.Time      `gorm:"autoUpdateTime"`
@@ -74,8 +74,8 @@ type FileAttachment struct {
 
 type Comment struct {
 	ID        int            `gorm:"primaryKey"`
-	TaskID    int            `gorm:"not null"`
-	UserID    int            `gorm:"not null"`
+	TaskID    int            `gorm:"not null;index"`
+	UserID    int            `gorm:"not null;index"`
 	Text      string         `gorm:"not null"`
 	CreatedAt time.Time      `gorm:"autoCreateTime"`
 	DeletedAt gorm.DeletedAt `gorm:"index"`

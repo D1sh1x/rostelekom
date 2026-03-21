@@ -25,10 +25,12 @@ export default function EmployeesPage() {
   const { data: employees = [] } = useQuery({
     queryKey: ['users'],
     queryFn: () => usersApi.list(),
+    select: (data) => data ?? [],
   })
   const { data: allSkills = [] } = useQuery({
     queryKey: ['skills'],
     queryFn: () => skillsApi.list(),
+    select: (data) => data ?? [],
   })
 
   const createMutation = useMutation({

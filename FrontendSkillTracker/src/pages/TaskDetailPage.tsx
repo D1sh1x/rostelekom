@@ -40,16 +40,19 @@ export default function TaskDetailPage() {
     queryKey: ['users'],
     queryFn: () => usersApi.list(),
     enabled: isManager,
+    select: (data) => data ?? [],
   })
   const { data: allSkills = [] } = useQuery({
     queryKey: ['skills'],
     queryFn: () => skillsApi.list(),
     enabled: isManager,
+    select: (data) => data ?? [],
   })
   const { data: recommended = [], isFetching: recLoading } = useQuery({
     queryKey: ['recommended', taskId],
     queryFn: () => tasksApi.getRecommendedEmployees(taskId),
     enabled: isManager,
+    select: (data) => data ?? [],
   })
 
   const employeeMap = Object.fromEntries(employees.map(e => [e.id, e.name]))

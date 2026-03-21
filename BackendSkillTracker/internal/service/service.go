@@ -377,7 +377,7 @@ func (s *services) GetTaskHistory(ctx context.Context, taskID int) ([]*dto.TaskH
 		return nil, err
 	}
 
-	var out []*dto.TaskHistoryResponse
+	out := make([]*dto.TaskHistoryResponse, 0, len(history))
 	for _, h := range history {
 		out = append(out, &dto.TaskHistoryResponse{
 			ID:        h.ID,
@@ -397,7 +397,7 @@ func (s *services) ListTasks(ctx context.Context, filter dto.TaskFilter) ([]*dto
 		return nil, err
 	}
 
-	var out []*dto.TaskResponse
+	out := make([]*dto.TaskResponse, 0, len(tasks))
 	for i := range tasks {
 		out = append(out, taskToDTO(&tasks[i]))
 	}

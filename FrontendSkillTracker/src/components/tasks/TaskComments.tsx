@@ -21,6 +21,7 @@ export default function TaskComments({ taskId }: TaskCommentsProps) {
   const { data: comments = [], isLoading } = useQuery({
     queryKey: ['comments', taskId],
     queryFn: () => commentsApi.list(taskId),
+    select: (data) => data ?? [],
   })
 
   const addMutation = useMutation({

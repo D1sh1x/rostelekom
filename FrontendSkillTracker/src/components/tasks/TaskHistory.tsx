@@ -18,6 +18,7 @@ export default function TaskHistory({ taskId }: TaskHistoryProps) {
   const { data: history = [], isLoading } = useQuery({
     queryKey: ['task-history', taskId],
     queryFn: () => tasksApi.getHistory(taskId),
+    select: (data) => data ?? [],
   })
 
   if (isLoading) return <div className="py-4 text-sm text-muted-foreground text-center">Loading...</div>
