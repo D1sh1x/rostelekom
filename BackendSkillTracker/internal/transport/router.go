@@ -13,6 +13,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/labstack/echo-contrib/echoprometheus"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	echoSwagger "github.com/swaggo/echo-swagger"
@@ -22,6 +23,9 @@ func NewServer(jwtSecret []byte, h *handler.Handler, cfg *config.Config) *http.S
 	e := echo.New()
 	e.Use(middleware.Recover())
 	e.Use(middleware.Logger())
+	e.Use(echoprometheus.NewMiddleware("skilltracker"))
+
+	e.GET("/metrics", echoprometheus.NewHandler())
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{
 			"http://localhost:3000",

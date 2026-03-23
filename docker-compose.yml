@@ -32,6 +32,7 @@ services:
     volumes:
       - ./BackendSkillTracker/config:/app/config
       - ./BackendSkillTracker/uploads:/app/uploads
+      - ./BackendSkillTracker/logs:/app/logs
 
   frontend:
     build:
@@ -42,6 +43,45 @@ services:
     restart: always
     depends_on:
       - backend
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./BackendSkillTracker/config/prometheus.yml:/etc/prometheus/prometheus.yml
+    restart: always
+
+  loki:
+    image: grafana/loki:latest
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./BackendSkillTracker/config/loki-config.yml:/etc/loki/local-config.yaml
+    command: -config.file=/etc/loki/local-config.yaml
+    restart: always
+
+  promtail:
+    image: grafana/promtail:latest
+    volumes:
+      - ./BackendSkillTracker/config/promtail-config.yml:/etc/promtail/config.yml
+      - ./BackendSkillTracker/logs:/app/logs
+    command: -config.file=/etc/promtail/config.yml
+    restart: always
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3001:3000"
+    volumes:
+      - ./BackendSkillTracker/config/grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus
+      - loki
+    restart: always
 
 volumes:
   pgdata:

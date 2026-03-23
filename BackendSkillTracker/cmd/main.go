@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"io"
 	"os"
 	"skilltracker/internal/config"
 	"skilltracker/internal/handler"
@@ -36,7 +37,18 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to init storage")
 	}
-	logger := log.With().Str("app", "skilltracker").Logger()
+
+	if err := os.MkdirAll("logs", os.ModePerm); err != nil {
+		log.Fatal().Err(err).Msg("failed to create logs directory")
+	}
+	file, err := os.OpenFile("logs/app.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to open log file")
+	}
+	multiWriter := io.MultiWriter(os.Stdout, file)
+	log.Logger = zerolog.New(multiWriter).With().Timestamp().Logger()
+
+	logger := log.Logger.With().Str("app", "skilltracker").Logger()
 
 	srv := service.New(store, logger, []byte(cfg.Auth.JWTSecret))
 
