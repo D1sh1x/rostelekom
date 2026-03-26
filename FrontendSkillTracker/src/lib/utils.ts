@@ -36,21 +36,21 @@ export function isDeadlineToday(deadline: string) {
 export function getStatusConfig(status: TaskStatus) {
   const map = {
     pending: {
-      label: 'Pending',
+      label: 'В ожидании',
       color: 'text-amber-400',
       bg: 'bg-amber-400/10',
       border: 'border-amber-400/20',
       dot: 'bg-amber-400',
     },
     in_progress: {
-      label: 'In Progress',
+      label: 'В процессе',
       color: 'text-sky-400',
       bg: 'bg-sky-400/10',
       border: 'border-sky-400/20',
       dot: 'bg-sky-400',
     },
     completed: {
-      label: 'Completed',
+      label: 'Завершено',
       color: 'text-emerald-400',
       bg: 'bg-emerald-400/10',
       border: 'border-emerald-400/20',
@@ -61,9 +61,9 @@ export function getStatusConfig(status: TaskStatus) {
 }
 
 export function getMatchScoreConfig(score: number) {
-  if (score >= 80) return { color: 'text-emerald-400', bg: 'bg-emerald-400/10', label: 'Great match' }
-  if (score >= 50) return { color: 'text-amber-400', bg: 'bg-amber-400/10', label: 'Partial match' }
-  return { color: 'text-rose-400', bg: 'bg-rose-400/10', label: 'Low match' }
+  if (score >= 80) return { color: 'text-emerald-400', bg: 'bg-emerald-400/10', label: 'Отличное совпадение' }
+  if (score >= 50) return { color: 'text-amber-400', bg: 'bg-amber-400/10', label: 'Частичное совпадение' }
+  return { color: 'text-rose-400', bg: 'bg-rose-400/10', label: 'Низкое совпадение' }
 }
 
 // Generate consistent color for a skill based on its name

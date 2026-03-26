@@ -21,11 +21,11 @@ export default function TaskHistory({ taskId }: TaskHistoryProps) {
     select: (data) => data ?? [],
   })
 
-  if (isLoading) return <div className="py-4 text-sm text-muted-foreground text-center">Loading...</div>
+  if (isLoading) return <div className="py-4 text-sm text-muted-foreground text-center">Загрузка...</div>
   if (history.length === 0) return (
     <div className="flex flex-col items-center gap-2 py-8 text-center text-sm text-muted-foreground">
       <History className="h-8 w-8 opacity-20" />
-      <p>No status changes recorded yet.</p>
+      <p>История изменений пока пуста.</p>
     </div>
   )
 
@@ -33,7 +33,7 @@ export default function TaskHistory({ taskId }: TaskHistoryProps) {
     <div className="flex flex-col gap-1">
       <div className="flex items-center gap-2 mb-3">
         <History className="h-4 w-4 text-violet-400" />
-        <h3 className="font-semibold">Status History</h3>
+        <h3 className="font-semibold">История изменений</h3>
       </div>
       <div className="relative pl-4">
         {/* Vertical line */}

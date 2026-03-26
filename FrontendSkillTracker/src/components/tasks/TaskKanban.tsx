@@ -11,9 +11,9 @@ interface Column {
 }
 
 const COLUMNS: Column[] = [
-  { status: 'pending', label: 'Pending' },
-  { status: 'in_progress', label: 'In Progress' },
-  { status: 'completed', label: 'Completed' },
+  { status: 'pending', label: 'Ожидает' },
+  { status: 'in_progress', label: 'В процессе' },
+  { status: 'completed', label: 'Завершено' },
 ]
 
 interface TaskKanbanProps {
@@ -61,7 +61,7 @@ export default function TaskKanban({ tasks, employeeMap, isManager, onAddTask }:
                   animate={{ opacity: 1 }}
                   className="flex items-center justify-center rounded-2xl border border-dashed border-border/50 p-8 text-xs text-muted-foreground"
                 >
-                  No tasks
+                  Задач нет
                 </motion.div>
               ) : (
                 colTasks.map((task, i) => (

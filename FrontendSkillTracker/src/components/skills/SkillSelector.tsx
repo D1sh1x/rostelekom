@@ -42,13 +42,13 @@ export default function SkillSelector({ allSkills, selectedSkills, onAdd, onRemo
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-64 p-3" align="start">
-            <div className="relative mb-2">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            <div className="relative flex-1">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
               <Input
-                placeholder="Search skills..."
+                placeholder="Поиск навыков..."
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                className="h-8 pl-8 text-sm"
+                className="pl-8 h-8 text-xs"
               />
             </div>
             <div className="flex flex-col gap-0.5 max-h-48 overflow-y-auto">

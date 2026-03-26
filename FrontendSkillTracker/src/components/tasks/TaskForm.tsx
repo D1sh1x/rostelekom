@@ -9,10 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import type { User } from '@/types'
 
 const schema = z.object({
-  title: z.string().min(3, 'Min 3 characters'),
+  title: z.string().min(3, 'Минимум 3 символа'),
   description: z.string().optional(),
-  employee_id: z.coerce.number().min(1, 'Select an employee'),
-  deadline: z.string().min(1, 'Deadline is required'),
+  employee_id: z.coerce.number().min(1, 'Выберите сотрудника'),
+  deadline: z.string().min(1, 'Укажите срок выполнения'),
   status: z.enum(['pending', 'in_progress', 'completed']).optional(),
   progress: z.coerce.number().min(0).max(100).optional(),
 })
@@ -36,15 +36,15 @@ export default function TaskForm({ employees, onSubmit, isLoading, defaultValues
       await onSubmit({ ...data, deadline: new Date(data.deadline).toISOString() })
     })} className="space-y-4">
       <div className="space-y-1.5">
-        <Label>Title</Label>
-        <Input placeholder="Task title" {...register('title')} />
+        <Label>Название</Label>
+        <Input placeholder="Название задачи" {...register('title')} />
         {errors.title && <p className="text-xs text-destructive">{errors.title.message}</p>}
       </div>
 
       <div className="space-y-1.5">
-        <Label>Description</Label>
+        <Label>Описание</Label>
         <textarea
-          placeholder="Task description..."
+          placeholder="Описание задачи..."
           {...register('description')}
           rows={3}
           className="flex w-full rounded-lg border border-border bg-background/50 px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none"
@@ -53,10 +53,10 @@ export default function TaskForm({ employees, onSubmit, isLoading, defaultValues
 
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
-          <Label>Assign to</Label>
+          <Label>Исполнитель</Label>
           <Select onValueChange={(v) => setValue('employee_id', Number(v))} defaultValue={defaultValues?.employee_id?.toString()}>
             <SelectTrigger>
-              <SelectValue placeholder="Select employee" />
+              <SelectValue placeholder="Выберите сотрудника" />
             </SelectTrigger>
             <SelectContent>
               {employees.map(e => (
@@ -68,7 +68,7 @@ export default function TaskForm({ employees, onSubmit, isLoading, defaultValues
         </div>
 
         <div className="space-y-1.5">
-          <Label>Deadline</Label>
+          <Label>Срок</Label>
           <Input type="datetime-local" {...register('deadline')} />
           {errors.deadline && <p className="text-xs text-destructive">{errors.deadline.message}</p>}
         </div>
@@ -76,27 +76,27 @@ export default function TaskForm({ employees, onSubmit, isLoading, defaultValues
 
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
-          <Label>Status</Label>
+          <Label>Статус</Label>
           <Select onValueChange={(v) => setValue('status', v as TaskFormData['status'])} defaultValue={defaultValues?.status || 'pending'}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="in_progress">In Progress</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
+              <SelectItem value="pending">Ожидает</SelectItem>
+              <SelectItem value="in_progress">В процессе</SelectItem>
+              <SelectItem value="completed">Завершено</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         <div className="space-y-1.5">
-          <Label>Progress ({watch('progress') ?? 0}%)</Label>
+          <Label>Прогресс ({watch('progress') ?? 0}%)</Label>
           <Input type="range" min={0} max={100} step={5} {...register('progress')} className="h-9 cursor-pointer" />
         </div>
       </div>
 
       <Button type="submit" className="w-full" disabled={isLoading}>
-        {isLoading ? <><Loader2 className="h-4 w-4 animate-spin" />Saving...</> : 'Save Task'}
+        {isLoading ? <><Loader2 className="h-4 w-4 animate-spin" />Сохранение...</> : 'Сохранить задачу'}
       </Button>
     </form>
   )

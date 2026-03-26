@@ -76,11 +76,11 @@ export default function TasksPage() {
     }),
     onSuccess: (task) => {
       qc.invalidateQueries({ queryKey: ['tasks'] })
-      toast({ title: 'Task created' })
+      toast({ title: 'Задача создана' })
       setDialogOpen(false)
       navigate(`/tasks/${task.id}`)
     },
-    onError: () => toast({ title: 'Failed to create task', variant: 'destructive' }),
+    onError: () => toast({ title: 'Ошибка создания задачи', variant: 'destructive' }),
   })
 
   const openDialog = (status: TaskStatus = 'pending') => {
@@ -94,9 +94,9 @@ export default function TasksPage() {
         {/* Header */}
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold">Tasks</h1>
+            <h1 className="text-2xl font-bold">Задачи</h1>
             <p className="text-sm text-muted-foreground mt-0.5">
-              {tasks.length} task{tasks.length !== 1 ? 's' : ''}
+              Всего: {tasks.length}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -107,21 +107,21 @@ export default function TasksPage() {
                 className={cn('flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors', view === 'kanban' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground')}
               >
                 <LayoutGrid className="h-3.5 w-3.5" />
-                Kanban
+                Канбан
               </button>
               <button
                 onClick={() => setView('list')}
                 className={cn('flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors', view === 'list' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground')}
               >
                 <List className="h-3.5 w-3.5" />
-                List
+                Список
               </button>
             </div>
 
             {isManager && (
               <Button onClick={() => openDialog()} className="gap-1.5" size="sm">
                 <Plus className="h-4 w-4" />
-                New Task
+                Новая задача
               </Button>
             )}
           </div>
@@ -140,9 +140,9 @@ export default function TasksPage() {
           {tasks.length === 0 ? (
             <EmptyState
               icon={Plus}
-              title="No tasks found"
-              description={isManager ? 'Create your first task to get started.' : 'No tasks assigned to you yet.'}
-              action={isManager ? <Button onClick={() => openDialog()}>Create task</Button> : undefined}
+              title="Задачи не найдены"
+              description={isManager ? 'Создайте свою первую задачу, чтобы начать.' : 'У вас пока нет назначенных задач.'}
+              action={isManager ? <Button onClick={() => openDialog()}>Создать задачу</Button> : undefined}
             />
           ) : view === 'kanban' ? (
             <motion.div key="kanban" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
@@ -181,7 +181,7 @@ export default function TasksPage() {
                       )}
                       <div className={cn('hidden md:flex items-center gap-1 text-xs shrink-0', overdue ? 'text-rose-400' : soon ? 'text-amber-400' : 'text-muted-foreground')}>
                         <Calendar className="h-3.5 w-3.5" />
-                        {formatDate(task.deadline, 'MMM d')}
+                        {formatDate(task.deadline, 'd MMM')}
                       </div>
                       {empName && (
                         <div className="hidden md:flex items-center gap-1.5 shrink-0">
@@ -205,7 +205,7 @@ export default function TasksPage() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Create Task</DialogTitle>
+            <DialogTitle>Создание задачи</DialogTitle>
           </DialogHeader>
           <TaskForm
             employees={employees}

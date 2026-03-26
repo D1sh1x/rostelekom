@@ -12,8 +12,8 @@ import { Label } from '@/components/ui/label'
 import { toast } from '@/hooks/use-toast'
 
 const schema = z.object({
-  username: z.string().min(1, 'Username is required'),
-  password: z.string().min(1, 'Password is required'),
+  username: z.string().min(1, 'Введите имя пользователя'),
+  password: z.string().min(1, 'Введите пароль'),
 })
 type FormData = z.infer<typeof schema>
 
@@ -36,7 +36,7 @@ export default function LoginPage() {
     } catch {
       setShake(true)
       setTimeout(() => setShake(false), 600)
-      toast({ title: 'Invalid credentials', description: 'Check your username and password.', variant: 'destructive' })
+      toast({ title: 'Неверные данные', description: 'Проверьте имя пользователя и пароль.', variant: 'destructive' })
     } finally {
       setIsLoading(false)
     }
@@ -77,15 +77,15 @@ export default function LoginPage() {
               <Sparkles className="h-7 w-7 text-white" />
             </div>
             <h1 className="text-2xl font-bold tracking-tight text-white">
-              Welcome back
+              С возвращением
             </h1>
-            <p className="mt-1 text-sm text-white/50">Sign in to SkillTracker</p>
+            <p className="mt-1 text-sm text-white/50">Войдите в SkillTracker</p>
           </div>
 
           {/* Form */}
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="username" className="text-white/70">Username</Label>
+              <Label htmlFor="username" className="text-white/70">Имя пользователя</Label>
               <Input
                 id="username"
                 placeholder="admin"
@@ -99,7 +99,7 @@ export default function LoginPage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="password" className="text-white/70">Password</Label>
+              <Label htmlFor="password" className="text-white/70">Пароль</Label>
               <div className="relative">
                 <Input
                   id="password"
@@ -131,16 +131,16 @@ export default function LoginPage() {
               {isLoading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Signing in...
+                  Вход...
                 </>
               ) : (
-                'Sign In'
+                'Войти'
               )}
             </Button>
           </form>
 
           <p className="mt-6 text-center text-xs text-white/30">
-            Default credentials: <span className="font-mono text-white/50">admin / admin123</span>
+            Данные по умолчанию: <span className="font-mono text-white/50">admin / admin123</span>
           </p>
         </motion.div>
       </motion.div>

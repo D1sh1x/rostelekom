@@ -28,19 +28,19 @@ export default function SkillsPage() {
     mutationFn: (data: SkillFormData) => skillsApi.create(data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['skills'] })
-      toast({ title: 'Skill created' })
+      toast({ title: 'Навык создан' })
       setCreateOpen(false)
     },
-    onError: () => toast({ title: 'Failed to create skill', variant: 'destructive' }),
+    onError: () => toast({ title: 'Ошибка создания навыка', variant: 'destructive' }),
   })
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) => skillsApi.delete(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['skills'] })
-      toast({ title: 'Skill deleted' })
+      toast({ title: 'Навык удален' })
     },
-    onError: () => toast({ title: 'Failed to delete skill', variant: 'destructive' }),
+    onError: () => toast({ title: 'Ошибка удаления навыка', variant: 'destructive' }),
   })
 
   const filtered = skills.filter(s =>
@@ -54,12 +54,12 @@ export default function SkillsPage() {
         {/* Header */}
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold">Skills</h1>
-            <p className="text-sm text-muted-foreground mt-0.5">{skills.length} skill{skills.length !== 1 ? 's' : ''} total</p>
+            <h1 className="text-2xl font-bold">Навыки</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">Всего навыков: {skills.length}</p>
           </div>
           <Button onClick={() => setCreateOpen(true)} className="gap-1.5" size="sm">
             <Plus className="h-4 w-4" />
-            New Skill
+            Новый навык
           </Button>
         </div>
 
@@ -67,7 +67,7 @@ export default function SkillsPage() {
         <div className="relative max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
           <Input
-            placeholder="Search skills..."
+            placeholder="Поиск навыков..."
             value={search}
             onChange={e => setSearch(e.target.value)}
             className="pl-9 h-9"
@@ -102,7 +102,7 @@ export default function SkillsPage() {
                     </div>
                     <button
                       onClick={() => {
-                        if (confirm(`Delete skill "${skill.name}"?`)) {
+                        if (confirm(`Удалить навык "${skill.name}"?`)) {
                           deleteMutation.mutate(skill.id)
                         }
                       }}
@@ -115,7 +115,7 @@ export default function SkillsPage() {
                   {skill.description ? (
                     <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">{skill.description}</p>
                   ) : (
-                    <p className="text-xs text-muted-foreground/50 italic">No description</p>
+                    <p className="text-xs text-muted-foreground/50 italic">Нет описания</p>
                   )}
 
                   <p className="mt-3 text-[10px] text-muted-foreground/50">
@@ -132,7 +132,7 @@ export default function SkillsPage() {
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>New Skill</DialogTitle>
+            <DialogTitle>Новый навык</DialogTitle>
           </DialogHeader>
           <SkillForm
             onSubmit={async data => { await createMutation.mutateAsync(data) }}

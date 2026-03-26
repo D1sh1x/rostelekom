@@ -37,7 +37,7 @@ export default function EmployeeCard({ user, skills = [], index = 0, onManageSki
             isManager ? 'bg-violet-500/10 text-violet-400' : 'bg-sky-500/10 text-sky-400'
           )}>
             {isManager ? <Shield className="h-2.5 w-2.5" /> : <UserIcon className="h-2.5 w-2.5" />}
-            {isManager ? 'Manager' : 'Employee'}
+            {isManager ? 'Менеджер' : 'Сотрудник'}
           </div>
         </div>
       </div>
@@ -52,7 +52,7 @@ export default function EmployeeCard({ user, skills = [], index = 0, onManageSki
             )}
           </div>
         ) : (
-          <p className="text-xs text-muted-foreground italic">No skills assigned</p>
+          <p className="text-xs text-muted-foreground italic">Навыки не назначены</p>
         )}
       </div>
 
@@ -61,7 +61,7 @@ export default function EmployeeCard({ user, skills = [], index = 0, onManageSki
           onClick={onManageSkills}
           className="mt-3 w-full rounded-lg border border-border/50 py-1.5 text-xs text-muted-foreground hover:border-violet-500/40 hover:text-violet-400 transition-colors"
         >
-          Manage skills
+          Управление навыками
         </button>
       )}
     </motion.div>

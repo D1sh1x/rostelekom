@@ -70,10 +70,10 @@ export default function TaskDetailPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['task', taskId] })
       qc.invalidateQueries({ queryKey: ['tasks'] })
-      toast({ title: 'Task updated' })
+      toast({ title: 'Задача обновлена' })
       setEditOpen(false)
     },
-    onError: () => toast({ title: 'Failed to update task', variant: 'destructive' }),
+    onError: () => toast({ title: 'Ошибка обновления задачи', variant: 'destructive' }),
   })
 
   const deleteMutation = useMutation({
@@ -81,9 +81,9 @@ export default function TaskDetailPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['tasks'] })
       navigate('/tasks')
-      toast({ title: 'Task deleted' })
+      toast({ title: 'Задача удалена' })
     },
-    onError: () => toast({ title: 'Failed to delete task', variant: 'destructive' }),
+    onError: () => toast({ title: 'Ошибка удаления задачи', variant: 'destructive' }),
   })
 
   const addSkillMutation = useMutation({
@@ -106,9 +106,9 @@ export default function TaskDetailPage() {
     mutationFn: (file: File) => tasksApi.uploadAttachment(taskId, file),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['task', taskId] })
-      toast({ title: 'File uploaded' })
+      toast({ title: 'Файл загружен' })
     },
-    onError: () => toast({ title: 'Upload failed', variant: 'destructive' }),
+    onError: () => toast({ title: 'Ошибка загрузки', variant: 'destructive' }),
   })
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -118,7 +118,7 @@ export default function TaskDetailPage() {
   }
 
   const handleDelete = () => {
-    if (confirm('Delete this task? This cannot be undone.')) {
+    if (confirm('Удалить эту задачу? Это действие необратимо.')) {
       deleteMutation.mutate()
     }
   }
@@ -139,8 +139,8 @@ export default function TaskDetailPage() {
     return (
       <AnimatedPage>
         <div className="flex flex-col items-center gap-4 py-20">
-          <p className="text-muted-foreground">Task not found</p>
-          <Button variant="outline" onClick={() => navigate('/tasks')}>Back to Tasks</Button>
+          <p className="text-muted-foreground">Задача не найдена</p>
+          <Button variant="outline" onClick={() => navigate('/tasks')}>Назад к задачам</Button>
         </div>
       </AnimatedPage>
     )
@@ -154,7 +154,7 @@ export default function TaskDetailPage() {
       <div className="space-y-6 max-w-5xl">
         {/* Breadcrumb */}
         <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-          <button onClick={() => navigate('/tasks')} className="hover:text-foreground transition-colors">Tasks</button>
+          <button onClick={() => navigate('/tasks')} className="hover:text-foreground transition-colors">Задачи</button>
           <ChevronRight className="h-4 w-4" />
           <span className="text-foreground font-medium truncate max-w-[300px]">{task.title}</span>
         </div>
@@ -180,7 +180,7 @@ export default function TaskDetailPage() {
                   <div className="flex items-center gap-1.5">
                     <Calendar className={cn('h-3.5 w-3.5', overdue ? 'text-rose-400' : '')} />
                     <span className={overdue ? 'text-rose-400 font-medium' : ''}>
-                      {overdue ? '⚠ Overdue · ' : ''}{formatDateTime(task.deadline)}
+                      {overdue ? '⚠ Просрочено · ' : ''}{formatDateTime(task.deadline)}
                     </span>
                   </div>
                   {assigneeName && (
@@ -191,7 +191,7 @@ export default function TaskDetailPage() {
                       <span>{assigneeName}</span>
                     </div>
                   )}
-                  <span>Created {formatDate(task.created_at)}</span>
+                  <span>Создана {formatDate(task.created_at)}</span>
                 </div>
               </div>
             </div>
@@ -200,11 +200,11 @@ export default function TaskDetailPage() {
               <div className="flex items-center gap-2">
                 <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setEditOpen(true)}>
                   <Edit2 className="h-3.5 w-3.5" />
-                  Edit
+                  Изменить
                 </Button>
                 <Button variant="destructive" size="sm" className="gap-1.5" onClick={handleDelete} disabled={deleteMutation.isPending}>
                   <Trash2 className="h-3.5 w-3.5" />
-                  Delete
+                  Удалить
                 </Button>
               </div>
             )}
@@ -213,7 +213,7 @@ export default function TaskDetailPage() {
           {/* Progress bar */}
           <div className="mt-5">
             <div className="flex justify-between text-xs text-muted-foreground mb-1.5">
-              <span>Progress</span>
+              <span>Прогресс</span>
               <span className="font-medium">{task.progress}%</span>
             </div>
             <Progress value={task.progress} className="h-2" />
@@ -232,7 +232,7 @@ export default function TaskDetailPage() {
             >
               <div className="flex items-center gap-2 mb-4">
                 <Zap className="h-4 w-4 text-amber-400" />
-                <h2 className="font-semibold">Required Skills</h2>
+                <h2 className="font-semibold">Требуемые навыки</h2>
                 {taskSkills.length > 0 && (
                   <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">{taskSkills.length}</span>
                 )}
@@ -255,9 +255,9 @@ export default function TaskDetailPage() {
             >
               <Tabs defaultValue="comments">
                 <TabsList className="mb-4">
-                  <TabsTrigger value="comments">Comments</TabsTrigger>
-                  <TabsTrigger value="history">History</TabsTrigger>
-                  <TabsTrigger value="attachments">Attachments</TabsTrigger>
+                  <TabsTrigger value="comments">Комментарии</TabsTrigger>
+                  <TabsTrigger value="history">История</TabsTrigger>
+                  <TabsTrigger value="attachments">Вложения</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="comments">
@@ -274,15 +274,15 @@ export default function TaskDetailPage() {
                     <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border/60 p-6 text-center hover:border-violet-500/40 hover:bg-muted/20 transition-colors">
                       <Upload className="h-8 w-8 text-muted-foreground/50" />
                       <div>
-                        <p className="text-sm font-medium">Click to upload file</p>
-                        <p className="text-xs text-muted-foreground">Any file type supported</p>
+                        <p className="text-sm font-medium">Нажмите, чтобы загрузить файл</p>
+                        <p className="text-xs text-muted-foreground">Поддерживаются любые типы файлов</p>
                       </div>
                       <input type="file" className="hidden" onChange={handleFileInput} disabled={uploadMutation.isPending} />
                     </label>
 
                     {/* Attachments list from task (task type may not include it, shown separately) */}
                     <p className="text-xs text-muted-foreground text-center">
-                      {uploadMutation.isPending ? 'Uploading...' : 'Uploaded files appear after refresh'}
+                      {uploadMutation.isPending ? 'Загрузка...' : 'Добавленные файлы появятся после обновления'}
                     </p>
                   </div>
                 </TabsContent>
@@ -300,7 +300,7 @@ export default function TaskDetailPage() {
             >
               <div className="flex items-center gap-2 mb-4">
                 <Users className="h-4 w-4 text-violet-400" />
-                <h2 className="font-semibold">Recommended</h2>
+                <h2 className="font-semibold">Рекомендовано</h2>
               </div>
               <RecommendedList employees={recommended} isLoading={recLoading} />
             </motion.div>
@@ -312,7 +312,7 @@ export default function TaskDetailPage() {
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Edit Task</DialogTitle>
+            <DialogTitle>Редактирование задачи</DialogTitle>
           </DialogHeader>
           <TaskForm
             employees={employees}

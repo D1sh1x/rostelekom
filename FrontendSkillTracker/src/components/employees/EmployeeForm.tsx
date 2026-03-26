@@ -9,9 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import type { User } from '@/types'
 
 const schema = z.object({
-  name: z.string().min(2, 'Min 2 characters'),
-  username: z.string().min(3, 'Min 3 characters'),
-  password: z.string().min(6, 'Min 6 characters').optional().or(z.literal('')),
+  name: z.string().min(2, 'Минимум 2 символа'),
+  username: z.string().min(3, 'Минимум 3 символа'),
+  password: z.string().min(6, 'Минимум 6 символов').optional().or(z.literal('')),
   role: z.enum(['manager', 'employee']),
 })
 export type EmployeeFormData = z.infer<typeof schema>
@@ -33,39 +33,39 @@ export default function EmployeeForm({ defaultValues, onSubmit, isLoading, isEdi
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
-          <Label>Full name</Label>
-          <Input placeholder="John Doe" {...register('name')} />
+          <Label>ФИО</Label>
+          <Input placeholder="Иван Иванов" {...register('name')} />
           {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
         </div>
         <div className="space-y-1.5">
-          <Label>Username</Label>
-          <Input placeholder="johndoe" {...register('username')} />
+          <Label>Логин</Label>
+          <Input placeholder="ivanov" {...register('username')} />
           {errors.username && <p className="text-xs text-destructive">{errors.username.message}</p>}
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
-          <Label>Password {isEdit && <span className="text-muted-foreground text-xs">(leave blank to keep)</span>}</Label>
-          <Input type="password" placeholder={isEdit ? '••••••' : 'Min 6 chars'} {...register('password')} />
+          <Label>Пароль {isEdit && <span className="text-muted-foreground text-xs">(оставьте пустым, чтобы не менять)</span>}</Label>
+          <Input type="password" placeholder={isEdit ? '••••••' : 'Мин. 6 симв.'} {...register('password')} />
           {errors.password && <p className="text-xs text-destructive">{errors.password.message}</p>}
         </div>
         <div className="space-y-1.5">
-          <Label>Role</Label>
+          <Label>Роль</Label>
           <Select onValueChange={v => setValue('role', v as 'manager' | 'employee')} defaultValue={defaultValues?.role ?? 'employee'}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="employee">Employee</SelectItem>
-              <SelectItem value="manager">Manager</SelectItem>
+              <SelectItem value="employee">Сотрудник</SelectItem>
+              <SelectItem value="manager">Менеджер</SelectItem>
             </SelectContent>
           </Select>
         </div>
       </div>
 
       <Button type="submit" className="w-full" disabled={isLoading}>
-        {isLoading ? <><Loader2 className="h-4 w-4 animate-spin" />{isEdit ? 'Saving...' : 'Creating...'}</> : isEdit ? 'Save Changes' : 'Create Employee'}
+        {isLoading ? <><Loader2 className="h-4 w-4 animate-spin" />{isEdit ? 'Сохранение...' : 'Создание...'}</> : isEdit ? 'Сохранить изменения' : 'Создать сотрудника'}
       </Button>
     </form>
   )

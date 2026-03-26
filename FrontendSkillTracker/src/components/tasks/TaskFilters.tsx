@@ -29,7 +29,7 @@ export default function TaskFilters({ filters, onChange, employees = [], showEmp
       <div className="relative flex-1 min-w-[180px] max-w-xs">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
         <Input
-          placeholder="Search tasks..."
+          placeholder="Поиск задач..."
           value={search}
           onChange={e => setSearch(e.target.value)}
           className="pl-9 h-9"
@@ -41,13 +41,13 @@ export default function TaskFilters({ filters, onChange, employees = [], showEmp
         onValueChange={v => onChange({ ...filters, status: v === 'all' ? undefined : (v as TaskFilter['status']) })}
       >
         <SelectTrigger className="h-9 w-36">
-          <SelectValue placeholder="All statuses" />
+          <SelectValue placeholder="Все статусы" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">All statuses</SelectItem>
-          <SelectItem value="pending">Pending</SelectItem>
-          <SelectItem value="in_progress">In Progress</SelectItem>
-          <SelectItem value="completed">Completed</SelectItem>
+          <SelectItem value="all">Все статусы</SelectItem>
+          <SelectItem value="pending">Ожидает</SelectItem>
+          <SelectItem value="in_progress">В процессе</SelectItem>
+          <SelectItem value="completed">Завершено</SelectItem>
         </SelectContent>
       </Select>
 
@@ -57,10 +57,10 @@ export default function TaskFilters({ filters, onChange, employees = [], showEmp
           onValueChange={v => onChange({ ...filters, employee_id: v === 'all' ? undefined : Number(v) })}
         >
           <SelectTrigger className="h-9 w-40">
-            <SelectValue placeholder="All employees" />
+            <SelectValue placeholder="Все сотрудники" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All employees</SelectItem>
+            <SelectItem value="all">Все сотрудники</SelectItem>
             {employees.map(e => (
               <SelectItem key={e.id} value={e.id.toString()}>{e.name}</SelectItem>
             ))}
@@ -76,7 +76,7 @@ export default function TaskFilters({ filters, onChange, employees = [], showEmp
           onClick={() => { onChange({}); setSearch('') }}
         >
           <X className="h-3.5 w-3.5" />
-          Clear
+          Очистить
         </Button>
       )}
     </div>

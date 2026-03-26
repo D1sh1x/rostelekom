@@ -42,19 +42,19 @@ export default function EmployeesPage() {
     }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['users'] })
-      toast({ title: 'Employee created' })
+      toast({ title: 'Сотрудник создан' })
       setCreateOpen(false)
     },
-    onError: () => toast({ title: 'Failed to create employee', variant: 'destructive' }),
+    onError: () => toast({ title: 'Ошибка создания сотрудника', variant: 'destructive' }),
   })
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) => usersApi.delete(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['users'] })
-      toast({ title: 'Employee removed' })
+      toast({ title: 'Сотрудник удален' })
     },
-    onError: () => toast({ title: 'Failed to delete employee', variant: 'destructive' }),
+    onError: () => toast({ title: 'Ошибка удаления сотрудника', variant: 'destructive' }),
   })
 
   const assignSkillMutation = useMutation({
@@ -92,12 +92,12 @@ export default function EmployeesPage() {
         {/* Header */}
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold">Team</h1>
-            <p className="text-sm text-muted-foreground mt-0.5">{employees.length} member{employees.length !== 1 ? 's' : ''}</p>
+            <h1 className="text-2xl font-bold">Команда</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">Всего: {employees.length}</p>
           </div>
           <Button onClick={() => setCreateOpen(true)} className="gap-1.5" size="sm">
             <Plus className="h-4 w-4" />
-            Add Employee
+            Добавить сотрудника
           </Button>
         </div>
 
@@ -105,7 +105,7 @@ export default function EmployeesPage() {
         <div className="relative max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
           <Input
-            placeholder="Search by name or username..."
+            placeholder="Поиск по имени или логину..."
             value={search}
             onChange={e => setSearch(e.target.value)}
             className="pl-9 h-9"
@@ -133,7 +133,7 @@ export default function EmployeesPage() {
                   />
                   <button
                     onClick={() => {
-                      if (confirm(`Remove ${emp.name}?`)) deleteMutation.mutate(emp.id)
+                      if (confirm(`Удалить сотрудника ${emp.name}?`)) deleteMutation.mutate(emp.id)
                     }}
                     className="absolute top-3 right-3 opacity-0 group-hover/card:opacity-100 transition-opacity rounded-lg p-1.5 text-muted-foreground hover:text-rose-400 hover:bg-rose-400/10"
                   >
@@ -164,7 +164,7 @@ export default function EmployeesPage() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
-              Skills — {skillsDialogUser?.name}
+              Навыки — {skillsDialogUser?.name}
             </DialogTitle>
           </DialogHeader>
           {skillsDialogUser && (

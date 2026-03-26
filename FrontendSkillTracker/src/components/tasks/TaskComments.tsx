@@ -30,7 +30,7 @@ export default function TaskComments({ taskId }: TaskCommentsProps) {
       qc.invalidateQueries({ queryKey: ['comments', taskId] })
       setText('')
     },
-    onError: () => toast({ title: 'Failed to send comment', variant: 'destructive' }),
+    onError: () => toast({ title: 'Ошибка отправки комментария', variant: 'destructive' }),
   })
 
   useEffect(() => {
@@ -48,19 +48,19 @@ export default function TaskComments({ taskId }: TaskCommentsProps) {
     <div className="flex flex-col gap-4">
       <div className="flex items-center gap-2">
         <MessageSquare className="h-4 w-4 text-violet-400" />
-        <h3 className="font-semibold">Comments</h3>
+        <h3 className="font-semibold">Комментарии</h3>
         <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">{comments.length}</span>
       </div>
 
       {/* Comments list */}
       <div className="flex flex-col gap-3 max-h-80 overflow-y-auto pr-1 scrollbar-thin">
         {isLoading && (
-          <div className="flex justify-center py-8 text-sm text-muted-foreground">Loading...</div>
+          <div className="flex justify-center py-8 text-sm text-muted-foreground">Загрузка...</div>
         )}
         {!isLoading && comments.length === 0 && (
           <div className="flex flex-col items-center gap-2 py-8 text-center text-sm text-muted-foreground">
             <MessageSquare className="h-8 w-8 opacity-20" />
-            <p>No comments yet. Be the first!</p>
+            <p>Комментариев пока нет. Будьте первым!</p>
           </div>
         )}
         <AnimatePresence initial={false}>
@@ -103,7 +103,7 @@ export default function TaskComments({ taskId }: TaskCommentsProps) {
           value={text}
           onChange={e => setText(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmit(e as unknown as React.FormEvent) } }}
-          placeholder="Write a comment... (Enter to send)"
+          placeholder="Напишите комментарий... (Enter для отправки)"
           rows={2}
           className="flex-1 rounded-xl border border-border bg-background/50 px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none"
         />

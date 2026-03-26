@@ -18,10 +18,10 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/tasks', icon: CheckSquare, label: 'Tasks' },
-  { to: '/employees', icon: Users, label: 'Employees', managerOnly: true },
-  { to: '/skills', icon: Zap, label: 'Skills', managerOnly: true },
+  { to: '/dashboard', icon: LayoutDashboard, label: 'Дашборд' },
+  { to: '/tasks', icon: CheckSquare, label: 'Задачи' },
+  { to: '/employees', icon: Users, label: 'Сотрудники', managerOnly: true },
+  { to: '/skills', icon: Zap, label: 'Навыки', managerOnly: true },
 ]
 
 export default function AppSidebar() {
@@ -32,7 +32,7 @@ export default function AppSidebar() {
 
   const handleLogout = async () => {
     await logout()
-    toast({ title: 'Logged out', variant: 'default' })
+    toast({ title: 'Выход выполнен', variant: 'default' })
     navigate('/login')
   }
 
@@ -106,13 +106,13 @@ export default function AppSidebar() {
         <button
           onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
           className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-all duration-150"
-          title={collapsed ? 'Toggle theme' : undefined}
+          title={collapsed ? 'Сменить тему' : undefined}
         >
           {theme === 'dark' ? <Sun className="h-4 w-4 shrink-0" /> : <Moon className="h-4 w-4 shrink-0" />}
           <AnimatePresence>
             {!collapsed && (
               <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                {theme === 'dark' ? 'Light mode' : 'Dark mode'}
+                {theme === 'dark' ? 'Светлая тема' : 'Темная тема'}
               </motion.span>
             )}
           </AnimatePresence>
@@ -127,7 +127,7 @@ export default function AppSidebar() {
             {!collapsed && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="min-w-0 flex-1">
                 <p className="truncate text-xs font-medium text-sidebar-foreground">{user?.name}</p>
-                <p className="truncate text-[10px] text-muted-foreground capitalize">{user?.role}</p>
+                <p className="truncate text-[10px] text-muted-foreground capitalize">{user?.role === 'manager' ? 'Менеджер' : 'Сотрудник'}</p>
               </motion.div>
             )}
           </AnimatePresence>
@@ -137,7 +137,7 @@ export default function AppSidebar() {
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 onClick={handleLogout}
                 className="shrink-0 rounded-lg p-1.5 text-muted-foreground hover:text-rose-400 hover:bg-rose-400/10 transition-colors"
-                title="Logout"
+                title="Выйти"
               >
                 <LogOut className="h-3.5 w-3.5" />
               </motion.button>
